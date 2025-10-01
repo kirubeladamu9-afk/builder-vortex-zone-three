@@ -58,3 +58,7 @@ export interface CreateTicketRequest {
 export interface DisplayResponse {
   rows: DisplayRow[];
 }
+
+export function formatTicketCode(service: ServiceType, number: number) {
+  return `${service}-${String(number).padStart(3, "0")}`;
+}
