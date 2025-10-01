@@ -172,26 +172,27 @@ function ServiceOptionCard({ option, isSelected, onSelect }: ServiceOptionCardPr
 
 interface TicketPreviewProps {
   ticket: Ticket | null;
-  draft: DraftDetails;
+  details: DraftDetails;
   selectedService: ServiceOption;
   isGenerating: boolean;
 }
 
-function TicketPreview({ ticket, draft, selectedService, isGenerating }: TicketPreviewProps) {
+function TicketPreview({ ticket, details, selectedService, isGenerating }: TicketPreviewProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  useMemo(() => qrDataUrl, [qrDataUrl]);
 
-  useMemo(() => {
+  useEffect(() => {
     let isActive = true;
     if (!ticket) {
       setQrDataUrl(null);
-      return undefined;
+      return () => {
+        isActive = false;
+      };
     }
     const payload = {
       code: ticket.code,
       service: ticket.service,
-      ownerName: ticket.ownerName ?? draft.ownerName,
-      woreda: ticket.woreda ?? draft.woreda,
+      ownerName: ticket.ownerName ?? details.ownerName,
+      woreda: ticket.woreda ?? details.woreda,
       createdAt: ticket.createdAt,
     };
     QRCode.toDataURL(JSON.stringify(payload), { width: 240, margin: 1 })
@@ -204,20 +205,20 @@ function TicketPreview({ ticket, draft, selectedService, isGenerating }: TicketP
     return () => {
       isActive = false;
     };
-  }, [ticket, draft.ownerName, draft.woreda]);
+  }, [ticket, details.ownerName, details.woreda]);
 
   const display = ticket
     ? {
         code: ticket.code,
-        ownerName: ticket.ownerName ?? draft.ownerName,
-        woreda: ticket.woreda ?? draft.woreda,
-        notes: ticket.notes ?? draft.notes,
+        ownerName: ticket.ownerName ?? details.ownerName,
+        woreda: ticket.woreda ?? details.woreda,
+        notes: ticket.notes ?? details.notes,
       }
     : {
         code: "Auto-assigned",
-        ownerName: draft.ownerName,
-        woreda: draft.woreda,
-        notes: draft.notes,
+        ownerName: details.ownerName,
+        woreda: details.woreda,
+        notes: details.notes,
       };
 
   const trackingUrl = ticket ? `https://qflowhq.com/tickets/${ticket.code}` : null;
@@ -495,7 +496,7 @@ export default function Reception() {
 
               <TicketPreview
                 ticket={generatedTicket}
-                draft={draft}
+                details={draft}
                 selectedService={selectedService}
                 isGenerating={createTicket.isPending}
               />
