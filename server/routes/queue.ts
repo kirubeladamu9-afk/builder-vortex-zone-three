@@ -46,7 +46,7 @@ function snapshot(): QueueSnapshot {
 }
 
 
-function enqueue(service: ServiceType, notes?: string): Ticket {
+function enqueue(service: ServiceType, notes?: string, ownerName?: string, woreda?: string): Ticket {
   const number = queues[service].nextNumber++;
   const id = randomUUID();
   const t: Ticket = {
@@ -58,6 +58,8 @@ function enqueue(service: ServiceType, notes?: string): Ticket {
     windowId: null,
     createdAt: Date.now(),
     notes,
+    ownerName,
+    woreda,
   };
   tickets[id] = t;
   queues[service].waitingIds.push(id);
