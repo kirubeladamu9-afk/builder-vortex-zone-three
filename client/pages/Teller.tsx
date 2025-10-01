@@ -102,7 +102,7 @@ export default function Teller() {
               <div className="rounded-xl border border-border/60 bg-background/70 p-4">
                 <p className="text-xs uppercase text-muted-foreground">Current ticket</p>
                 <p className="mt-1 font-display text-2xl">
-                  {w.currentTicketId ? "" : "—"}
+                  {w.currentTicketId ? tickets[w.currentTicketId]?.code ?? "" : "—"}
                 </p>
               </div>
               <div className="flex items-center gap-2">
