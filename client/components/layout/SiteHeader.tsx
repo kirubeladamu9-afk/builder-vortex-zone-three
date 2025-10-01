@@ -19,7 +19,7 @@ const SiteHeader = () => {
   const closeMenu = () => setIsMenuOpen(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur">
+    <header className="relative sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur">
       <div className="container flex items-center justify-between gap-6 py-4">
         <Link to="/" className="flex items-center gap-2">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-lg font-semibold text-primary">
@@ -78,10 +78,10 @@ const SiteHeader = () => {
       <div
         className={cn(
           "md:hidden",
-          "fixed inset-x-0 top-[72px] z-40 origin-top bg-background/95 backdrop-blur transition-all duration-200",
+          "absolute left-0 right-0 top-full z-40 origin-top bg-background/95 backdrop-blur transition-all duration-200",
           isMenuOpen
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none -translate-y-4 opacity-0",
+            ? "pointer-events-auto visible translate-y-0 opacity-100"
+            : "pointer-events-none invisible -translate-y-3 opacity-0",
         )}
       >
         <div className="container flex flex-col gap-3 py-6">
