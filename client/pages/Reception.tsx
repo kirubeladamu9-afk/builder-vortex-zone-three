@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader2, Award, BadgeCheck, ClipboardSignature, Handshake, ShieldCheck } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import QRCode from "qrcode";
