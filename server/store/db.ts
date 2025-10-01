@@ -118,7 +118,15 @@ export async function createTicketDb(
       `INSERT INTO tickets (id, service, number, code, status, window_id, notes, owner_name, woreda)
        VALUES ($1, $2, $3, $4, 'waiting', NULL, $5, $6, $7)
        RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes, owner_name, woreda;`,
-      [id, service, number, code, notes ?? null, ownerName ?? null, woreda ?? null],
+      [
+        id,
+        service,
+        number,
+        code,
+        notes ?? null,
+        ownerName ?? null,
+        woreda ?? null,
+      ],
     );
     await client.query("COMMIT");
     const r = rows[0];

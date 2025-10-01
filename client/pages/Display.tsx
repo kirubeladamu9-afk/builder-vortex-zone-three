@@ -21,14 +21,17 @@ export default function Display() {
 
   useEffect(() => {
     let stop = false;
-    getWindows().then((w) => !stop && setWindows(w)).catch(() => {});
+    getWindows()
+      .then((w) => !stop && setWindows(w))
+      .catch(() => {});
     const poll = () =>
       getDisplay()
         .then((d) => {
           if (stop) return;
           const map: Record<number, string | null> = {};
           d.rows.forEach((r) => {
-            if (r.nowServing.windowId) map[r.nowServing.windowId] = r.nowServing.code;
+            if (r.nowServing.windowId)
+              map[r.nowServing.windowId] = r.nowServing.code;
           });
           setWinCodes(map);
         })
@@ -48,7 +51,8 @@ export default function Display() {
       if (rows) {
         const map: Record<number, string | null> = {};
         rows.forEach((r) => {
-          if (r.nowServing.windowId) map[r.nowServing.windowId] = r.nowServing.code;
+          if (r.nowServing.windowId)
+            map[r.nowServing.windowId] = r.nowServing.code;
         });
         setWinCodes(map);
       }
@@ -61,7 +65,8 @@ export default function Display() {
       const rows = ev.payload as DisplayRow[];
       const map: Record<number, string | null> = {};
       rows.forEach((r) => {
-        if (r.nowServing.windowId) map[r.nowServing.windowId] = r.nowServing.code;
+        if (r.nowServing.windowId)
+          map[r.nowServing.windowId] = r.nowServing.code;
       });
       setWinCodes(map);
     }
@@ -70,15 +75,26 @@ export default function Display() {
   return (
     <div className="min-h-[calc(100vh-120px)] bg-background py-10">
       <div className="container">
-        <h1 className="mb-8 text-center font-display text-5xl font-bold">Now Serving</h1>
+        <h1 className="mb-8 text-center font-display text-5xl font-bold">
+          Now Serving
+        </h1>
         <div className="grid gap-6 md:grid-cols-3">
           {windows.map((w) => {
             const code = winCodes[w.id] ?? null;
             return (
-              <Card key={w.id} className="rounded-3xl border border-border/60 bg-card/90 p-6 shadow-xl">
-                <div className="text-sm uppercase text-muted-foreground">{w.name}</div>
-                <div className="mt-3 text-2xl font-semibold text-green-600">Now Serving: {code ?? "—"}</div>
-                <div className="mt-2 text-sm text-muted-foreground">Status: {w.busy ? "Serving" : "Idle"}</div>
+              <Card
+                key={w.id}
+                className="rounded-3xl border border-border/60 bg-card/90 p-6 shadow-xl"
+              >
+                <div className="text-sm uppercase text-muted-foreground">
+                  {w.name}
+                </div>
+                <div className="mt-3 text-2xl font-semibold text-green-600">
+                  Now Serving: {code ?? "—"}
+                </div>
+                <div className="mt-2 text-sm text-muted-foreground">
+                  Status: {w.busy ? "Serving" : "Idle"}
+                </div>
               </Card>
             );
           })}

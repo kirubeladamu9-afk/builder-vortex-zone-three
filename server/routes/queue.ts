@@ -160,21 +160,29 @@ export const sseHandler: RequestHandler = async (req, res) => {
       const waitingRes = await p.query(
         `SELECT id, service FROM tickets WHERE status='waiting' ORDER BY created_at, number`,
       );
-      const servicesState: Record<ServiceType, { nextNumber: number; waitingIds: string[] }> = {
+      const servicesState: Record<
+        ServiceType,
+        { nextNumber: number; waitingIds: string[] }
+      > = {
         S1: { nextNumber: 1, waitingIds: [] },
         S2: { nextNumber: 1, waitingIds: [] },
         S3: { nextNumber: 1, waitingIds: [] },
       };
       for (const r of countersRes.rows) {
         const svc = r.service as ServiceType;
-        if (servicesState[svc]) servicesState[svc].nextNumber = Number(r.next_number);
+        if (servicesState[svc])
+          servicesState[svc].nextNumber = Number(r.next_number);
       }
       for (const r of waitingRes.rows) {
         const svc = r.service as ServiceType;
         if (servicesState[svc]) servicesState[svc].waitingIds.push(r.id);
       }
 
-      payload = { windows: windowsDb, services: servicesState, tickets: ticketsMap };
+      payload = {
+        windows: windowsDb,
+        services: servicesState,
+        tickets: ticketsMap,
+      };
     } catch (e) {
       payload = snapshot();
     }
@@ -183,7 +191,9 @@ export const sseHandler: RequestHandler = async (req, res) => {
   }
 
   const init: QueueEvent = { type: "init", payload };
-  res.write(`event: ${init.type}\n` + `data: ${JSON.stringify(init.payload)}\n\n`);
+  res.write(
+    `event: ${init.type}\n` + `data: ${JSON.stringify(init.payload)}\n\n`,
+  );
 
   req.on("close", () => {
     sseClients.delete(client);
