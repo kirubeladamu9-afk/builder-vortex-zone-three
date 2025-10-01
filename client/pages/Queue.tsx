@@ -57,7 +57,15 @@ export default function Queue() {
   const [rows, setRows] = useState<DisplayRow[]>([]);
 
   useEffect(() => {
-    getDisplay().then((d) => setRows(d.rows)).catch(() => {});
+    let stop = false;
+    getDisplay().then((d) => !stop && setRows(d.rows)).catch(() => {});
+    const id = setInterval(() => {
+      getDisplay().then((d) => !stop && setRows(d.rows)).catch(() => {});
+    }, 3000);
+    return () => {
+      stop = true;
+      clearInterval(id);
+    };
   }, []);
 
   useSSE("/api/events", (ev) => {
