@@ -25,7 +25,9 @@ export function getPool() {
 export async function initDb() {
   if (!isDbEnabled) return;
   const p = getPool();
+  await p.query(`CREATE EXTENSION IF NOT EXISTS "pgcrypto"`);
   await p.query(`CREATE TABLE IF NOT EXISTS windows (
+) }? Wait need ;**
     id int primary key,
     name text not null,
     current_ticket_id uuid,
