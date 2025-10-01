@@ -1,6 +1,6 @@
 import { Pool } from "pg";
-import type { DisplayRow, ServiceType, Ticket, WindowState } from "@shared/api";
-import { formatTicketCode } from "@shared/api";
+import type { DisplayRow, ServiceType, Ticket, WindowState } from "../../shared/api";
+import { formatTicketCode } from "../../shared/api";
 
 export const isDbEnabled = Boolean(process.env.DATABASE_URL);
 
