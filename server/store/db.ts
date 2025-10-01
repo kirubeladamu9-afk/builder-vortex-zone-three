@@ -25,7 +25,11 @@ export function getPool() {
 export async function initDb() {
   if (!isDbEnabled) return;
   const p = getPool();
-  await p.query(`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`);
+  try {
+    await p.query(`CREATE EXTENSION IF NOT EXISTS "pgcrypto";`);
+  } catch {
+    // ignore if not permitted; we'll generate UUIDs in app code
+  }
   await p.query(`CREATE TABLE IF NOT EXISTS windows (
     id int primary key,
     name text not null,
@@ -109,11 +113,12 @@ export async function createTicketDb(
     await client.query("BEGIN");
     const number = await nextNumber(service, client);
     const code = formatTicketCode(service, number);
+    const id = (await import("node:crypto")).randomUUID();
     const { rows } = await client.query(
       `INSERT INTO tickets (id, service, number, code, status, window_id, notes, owner_name, woreda)
-       VALUES (gen_random_uuid(), $1, $2, $3, 'waiting', NULL, $4, $5, $6)
+       VALUES ($1, $2, $3, $4, 'waiting', NULL, $5, $6, $7)
        RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes, owner_name, woreda;`,
-      [service, number, code, notes ?? null, ownerName ?? null, woreda ?? null],
+      [id, service, number, code, notes ?? null, ownerName ?? null, woreda ?? null],
     );
     await client.query("COMMIT");
     const r = rows[0];
