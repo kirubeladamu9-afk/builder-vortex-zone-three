@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Award, BadgeCheck, ClipboardSignature, Handshake, ShieldCheck } from "lucide-react";
+import {
+  Loader2,
+  Award,
+  BadgeCheck,
+  ClipboardSignature,
+  Handshake,
+  ShieldCheck,
+} from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import QRCode from "qrcode";
 import { toast } from "sonner";
@@ -15,7 +22,13 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import type { ServiceType, Ticket } from "@shared/api";
@@ -90,7 +103,9 @@ type CreateTicketPayload = {
   priorityCode?: string;
 };
 
-async function createTicketRequest(payload: CreateTicketPayload): Promise<Ticket> {
+async function createTicketRequest(
+  payload: CreateTicketPayload,
+): Promise<Ticket> {
   const trimmedNotes = payload.notes?.trim() ?? "";
   const trimmedPriority = payload.priorityCode?.trim() ?? "";
   const combinedNotes = [
@@ -115,10 +130,14 @@ async function createTicketRequest(payload: CreateTicketPayload): Promise<Ticket
     const text = await response.text();
     try {
       const parsed = JSON.parse(text);
-      const message = parsed.error || parsed.message || text || "Unable to create ticket.";
+      const message =
+        parsed.error || parsed.message || text || "Unable to create ticket.";
       throw new Error(message);
     } catch (error) {
-      if (error instanceof Error && error.message !== "Unexpected end of JSON input") {
+      if (
+        error instanceof Error &&
+        error.message !== "Unexpected end of JSON input"
+      ) {
         throw error;
       }
       throw new Error(text || "Unable to create ticket.");
@@ -144,7 +163,11 @@ interface ServiceOptionCardProps {
   onSelect: (value: ServiceType) => void;
 }
 
-function ServiceOptionCard({ option, isSelected, onSelect }: ServiceOptionCardProps) {
+function ServiceOptionCard({
+  option,
+  isSelected,
+  onSelect,
+}: ServiceOptionCardProps) {
   return (
     <button
       type="button"
@@ -156,10 +179,14 @@ function ServiceOptionCard({ option, isSelected, onSelect }: ServiceOptionCardPr
           : "border-border/70 hover:border-primary/40 hover:text-foreground",
       )}
     >
-      <div className={cn(
-        "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border",
-        isSelected ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground",
-      )}>
+      <div
+        className={cn(
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border",
+          isSelected
+            ? "border-primary bg-primary/10 text-primary"
+            : "border-border text-muted-foreground",
+        )}
+      >
         <Award className="h-4 w-4" />
       </div>
       <div className="space-y-1">
@@ -177,7 +204,12 @@ interface TicketPreviewProps {
   isGenerating: boolean;
 }
 
-function TicketPreview({ ticket, details, selectedService, isGenerating }: TicketPreviewProps) {
+function TicketPreview({
+  ticket,
+  details,
+  selectedService,
+  isGenerating,
+}: TicketPreviewProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -222,9 +254,14 @@ function TicketPreview({ ticket, details, selectedService, isGenerating }: Ticke
         notes: details.notes,
       };
 
-  const trackingUrl = ticket ? `https://qflowhq.com/tickets/${ticket.code}` : null;
+  const trackingUrl = ticket
+    ? `https://qflowhq.com/tickets/${ticket.code}`
+    : null;
   const noteLines = display.notes
-    ? display.notes.split("\n").map((line) => line.trim()).filter(Boolean)
+    ? display.notes
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
     : [];
 
   return (
@@ -232,7 +269,8 @@ function TicketPreview({ ticket, details, selectedService, isGenerating }: Ticke
       <p className="font-semibold uppercase tracking-wide">Ticket preview</p>
       {!ticket && (
         <p className="mt-2 text-primary/80">
-          Fill out the form to automatically issue the next order number and generate a QR ticket.
+          Fill out the form to automatically issue the next order number and
+          generate a QR ticket.
         </p>
       )}
       <div className="mt-4 grid gap-3 text-primary/80">
@@ -290,7 +328,8 @@ function TicketPreview({ ticket, details, selectedService, isGenerating }: Ticke
         ) : (
           <div className="rounded-xl border border-primary/30 bg-white/70 p-3 text-primary/90">
             <p className="text-xs">
-              QR code appears here once you generate the ticket. Reception can print or show it on-screen instantly.
+              QR code appears here once you generate the ticket. Reception can
+              print or show it on-screen instantly.
             </p>
           </div>
         )}
@@ -312,11 +351,16 @@ export default function Reception() {
   const [notes, setNotes] = useState("");
   const [priorityCode, setPriorityCode] = useState("");
   const [generatedTicket, setGeneratedTicket] = useState<Ticket | null>(null);
-  const [lastSubmission, setLastSubmission] = useState<DraftDetails | null>(null);
+  const [lastSubmission, setLastSubmission] = useState<DraftDetails | null>(
+    null,
+  );
 
   const selectedService = useMemo(() => {
     const value = generatedTicket?.service ?? service;
-    return SERVICE_OPTIONS.find((option) => option.value === value) ?? SERVICE_OPTIONS[0];
+    return (
+      SERVICE_OPTIONS.find((option) => option.value === value) ??
+      SERVICE_OPTIONS[0]
+    );
   }, [generatedTicket?.service, service]);
 
   const createTicket = useMutation<Ticket, Error, CreateTicketPayload>({
@@ -325,7 +369,9 @@ export default function Reception() {
       setGeneratedTicket(ticket);
       const trimmedNotes = variables.notes?.trim() ?? "";
       const combinedNotes = [
-        variables.priorityCode?.trim() ? `Priority: ${variables.priorityCode.trim()}` : null,
+        variables.priorityCode?.trim()
+          ? `Priority: ${variables.priorityCode.trim()}`
+          : null,
         trimmedNotes ? trimmedNotes : null,
       ]
         .filter(Boolean)
@@ -344,7 +390,8 @@ export default function Reception() {
       setPriorityCode("");
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "Unable to create ticket.";
+      const message =
+        error instanceof Error ? error.message : "Unable to create ticket.";
       toast.error(message);
     },
   });
@@ -381,7 +428,8 @@ export default function Reception() {
     priorityCode: priorityCode.trim(),
     service,
   };
-  const previewDetails = generatedTicket && lastSubmission ? lastSubmission : draft;
+  const previewDetails =
+    generatedTicket && lastSubmission ? lastSubmission : draft;
 
   return (
     <div className="relative overflow-hidden">
@@ -394,31 +442,52 @@ export default function Reception() {
             Issue QR-powered tickets while giving staff guided confidence
           </h1>
           <p className="text-lg text-muted-foreground">
-            Replace scribbled paper with a structured console built for speed. Every ticket is generated with a single tap, instantly queued, and ready for the guest to scan.
+            Replace scribbled paper with a structured console built for speed.
+            Every ticket is generated with a single tap, instantly queued, and
+            ready for the guest to scan.
           </p>
           <div className="grid gap-5 sm:grid-cols-3">
             <div className="rounded-2xl border border-border/60 bg-background/60 p-5">
-              <p className="text-xs uppercase text-muted-foreground">Average issuance time</p>
-              <p className="mt-2 font-display text-2xl font-semibold text-foreground">42 sec</p>
-              <p className="mt-1 text-xs text-muted-foreground">From arrival to QR slip</p>
+              <p className="text-xs uppercase text-muted-foreground">
+                Average issuance time
+              </p>
+              <p className="mt-2 font-display text-2xl font-semibold text-foreground">
+                42 sec
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                From arrival to QR slip
+              </p>
             </div>
             <div className="rounded-2xl border border-border/60 bg-background/60 p-5">
-              <p className="text-xs uppercase text-muted-foreground">Priority handling</p>
-              <p className="mt-2 font-display text-2xl font-semibold text-foreground">Auto alerts</p>
-              <p className="mt-1 text-xs text-muted-foreground">Accessibility & VIP ready</p>
+              <p className="text-xs uppercase text-muted-foreground">
+                Priority handling
+              </p>
+              <p className="mt-2 font-display text-2xl font-semibold text-foreground">
+                Auto alerts
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Accessibility & VIP ready
+              </p>
             </div>
             <div className="rounded-2xl border border-border/60 bg-background/60 p-5">
-              <p className="text-xs uppercase text-muted-foreground">Training time</p>
+              <p className="text-xs uppercase text-muted-foreground">
+                Training time
+              </p>
               <p className="mt-2 font-display text-2xl font-semibold text-foreground">
                 <span className="text-primary">1 shift</span>
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">Guided onboarding module</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Guided onboarding module
+              </p>
             </div>
           </div>
           <div className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-lg shadow-primary/10">
-            <h2 className="font-display text-2xl font-semibold text-foreground">Reception script at a glance</h2>
+            <h2 className="font-display text-2xl font-semibold text-foreground">
+              Reception script at a glance
+            </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Empower new hires with a consistent approach. Prompts evolve as fields are completed to keep conversations smooth.
+              Empower new hires with a consistent approach. Prompts evolve as
+              fields are completed to keep conversations smooth.
             </p>
             <ul className="mt-5 space-y-3 text-sm text-muted-foreground">
               {SCRIPT_POINTS.map((step, index) => (
@@ -443,7 +512,8 @@ export default function Reception() {
               Issue virtual ticket
             </CardTitle>
             <CardDescription>
-              Capture the essentials, click “Generate QR Ticket”, and hand the guest a slip—or mirror the QR on screen.
+              Capture the essentials, click “Generate QR Ticket”, and hand the
+              guest a slip—or mirror the QR on screen.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -491,7 +561,9 @@ export default function Reception() {
                       <ServiceOptionCard
                         key={option.value}
                         option={option}
-                        isSelected={(generatedTicket?.service ?? service) === option.value}
+                        isSelected={
+                          (generatedTicket?.service ?? service) === option.value
+                        }
                         onSelect={(value) => {
                           setService(value);
                           setGeneratedTicket(null);
@@ -544,7 +616,8 @@ export default function Reception() {
                 )}
               </Button>
               <p className="text-center text-xs text-muted-foreground">
-                QR auto-refreshes every 60 seconds. Print or display to the guest instantly.
+                QR auto-refreshes every 60 seconds. Print or display to the
+                guest instantly.
               </p>
             </form>
           </CardContent>
