@@ -13,6 +13,8 @@ export interface Ticket {
   windowId: number | null;
   createdAt: number;
   notes?: string;
+  ownerName?: string;
+  woreda?: string;
 }
 
 export interface WindowState {
@@ -53,6 +55,8 @@ export interface TransferRequest {
 export interface CreateTicketRequest {
   service: ServiceType;
   notes?: string;
+  ownerName?: string;
+  woreda?: string;
 }
 
 export interface DisplayResponse {
