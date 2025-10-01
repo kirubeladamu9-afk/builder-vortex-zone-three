@@ -75,7 +75,9 @@ export default function Teller() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["windows"] }),
   });
 
-  const [serviceByWindow, setServiceByWindow] = useState<Record<number, "S1" | "S2" | "S3">>({});
+  const [serviceByWindow, setServiceByWindow] = useState<
+    Record<number, "S1" | "S2" | "S3">
+  >({});
   useEffect(() => {
     if (windowsQuery.data) {
       const init: Record<number, "S1" | "S2" | "S3"> = {};
@@ -86,23 +88,31 @@ export default function Teller() {
 
   return (
     <div className="container py-10">
-      <h1 className="mb-6 font-display text-3xl font-semibold">Teller Console</h1>
+      <h1 className="mb-6 font-display text-3xl font-semibold">
+        Teller Console
+      </h1>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {windowsQuery.data?.map((w) => (
           <Card key={w.id} className="border-border/70 bg-card/80">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>{w.name}</span>
-                <span className={`text-sm ${w.busy ? "text-green-600" : "text-muted-foreground"}`}>
+                <span
+                  className={`text-sm ${w.busy ? "text-green-600" : "text-muted-foreground"}`}
+                >
                   {w.busy ? "Serving" : "Idle"}
                 </span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="rounded-xl border border-border/60 bg-background/70 p-4">
-                <p className="text-xs uppercase text-muted-foreground">Current ticket</p>
+                <p className="text-xs uppercase text-muted-foreground">
+                  Current ticket
+                </p>
                 <p className="mt-1 font-display text-2xl">
-                  {w.currentTicketId ? tickets[w.currentTicketId]?.code ?? "" : "—"}
+                  {w.currentTicketId
+                    ? (tickets[w.currentTicketId]?.code ?? "")
+                    : "—"}
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -110,7 +120,10 @@ export default function Teller() {
                   className="h-10 rounded-md border border-border bg-background px-2 text-sm"
                   value={serviceByWindow[w.id] || "S1"}
                   onChange={(e) =>
-                    setServiceByWindow((s) => ({ ...s, [w.id]: e.target.value as any }))
+                    setServiceByWindow((s) => ({
+                      ...s,
+                      [w.id]: e.target.value as any,
+                    }))
                   }
                 >
                   <option value="S1">Service 1</option>
@@ -118,7 +131,12 @@ export default function Teller() {
                   <option value="S3">Service 3</option>
                 </select>
                 <Button
-                  onClick={() => callNext.mutate({ id: w.id, service: serviceByWindow[w.id] })}
+                  onClick={() =>
+                    callNext.mutate({
+                      id: w.id,
+                      service: serviceByWindow[w.id],
+                    })
+                  }
                   disabled={callNext.isPending}
                 >
                   Call Next
@@ -142,7 +160,10 @@ export default function Teller() {
                 >
                   Skip
                 </Button>
-                <TransferControl windowId={w.id} onTransfer={(target) => transfer.mutate({ id: w.id, target })} />
+                <TransferControl
+                  windowId={w.id}
+                  onTransfer={(target) => transfer.mutate({ id: w.id, target })}
+                />
               </div>
             </CardContent>
           </Card>
@@ -163,9 +184,21 @@ export default function Teller() {
   );
 }
 
-function TransferControl({ windowId, onTransfer }: { windowId: number; onTransfer: (target: number) => void }) {
-  const { data } = useQuery({ queryKey: ["windows"], queryFn: async () => api<WindowState[]>("/api/windows") });
-  const targets = useMemo(() => (data || []).filter((w) => w.id !== windowId), [data, windowId]);
+function TransferControl({
+  windowId,
+  onTransfer,
+}: {
+  windowId: number;
+  onTransfer: (target: number) => void;
+}) {
+  const { data } = useQuery({
+    queryKey: ["windows"],
+    queryFn: async () => api<WindowState[]>("/api/windows"),
+  });
+  const targets = useMemo(
+    () => (data || []).filter((w) => w.id !== windowId),
+    [data, windowId],
+  );
   const [target, setTarget] = useState<number | undefined>(targets[0]?.id);
   useEffect(() => setTarget(targets[0]?.id), [targets]);
 
@@ -177,10 +210,14 @@ function TransferControl({ windowId, onTransfer }: { windowId: number; onTransfe
         onChange={(e) => setTarget(Number(e.target.value))}
       >
         {targets.map((t) => (
-          <option key={t.id} value={t.id}>{t.name}</option>
+          <option key={t.id} value={t.id}>
+            {t.name}
+          </option>
         ))}
       </select>
-      <Button variant="ghost" onClick={() => target && onTransfer(target)}>Transfer</Button>
+      <Button variant="ghost" onClick={() => target && onTransfer(target)}>
+        Transfer
+      </Button>
     </div>
   );
 }

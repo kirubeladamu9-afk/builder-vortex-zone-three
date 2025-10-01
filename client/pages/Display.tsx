@@ -22,14 +22,18 @@ export default function Display() {
   return (
     <div className="min-h-[calc(100vh-120px)] bg-background py-10">
       <div className="container">
-        <h1 className="mb-8 text-center font-display text-5xl font-bold">Now Serving</h1>
+        <h1 className="mb-8 text-center font-display text-5xl font-bold">
+          Now Serving
+        </h1>
         <div className="grid gap-6 md:grid-cols-3">
           {rows.map((r) => (
             <div
               key={r.service}
               className="rounded-3xl border border-border/60 bg-card/90 p-6 shadow-xl"
             >
-              <div className="text-sm uppercase text-muted-foreground">Service {r.service.slice(1)}</div>
+              <div className="text-sm uppercase text-muted-foreground">
+                Service {r.service.slice(1)}
+              </div>
               <div className="mt-3 text-2xl font-semibold text-green-600">
                 Now Serving: {r.nowServing.code ?? "—"}
                 {r.nowServing.code && (

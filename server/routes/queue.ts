@@ -13,22 +13,39 @@ import {
   WindowState,
   formatTicketCode,
 } from "../../shared/api";
-import { isDbEnabled, listWindowsDb, createTicketDb, callNextDb, recallDb, completeDb, skipDb, transferDb, displayRowsDb, seedDemoDb } from "../store/db";
+import {
+  isDbEnabled,
+  listWindowsDb,
+  createTicketDb,
+  callNextDb,
+  recallDb,
+  completeDb,
+  skipDb,
+  transferDb,
+  displayRowsDb,
+  seedDemoDb,
+} from "../store/db";
 
 // In-memory store (can be swapped with DB adapter)
 const WINDOWS_COUNT = 6;
 const SERVICES: ServiceType[] = ["S1", "S2", "S3"];
 
-const windows: WindowState[] = Array.from({ length: WINDOWS_COUNT }, (_, i) => ({
-  id: i + 1,
-  name: `Window ${i + 1}`,
-  currentTicketId: null,
-  busy: false,
-  updatedAt: Date.now(),
-}));
+const windows: WindowState[] = Array.from(
+  { length: WINDOWS_COUNT },
+  (_, i) => ({
+    id: i + 1,
+    name: `Window ${i + 1}`,
+    currentTicketId: null,
+    busy: false,
+    updatedAt: Date.now(),
+  }),
+);
 
 const tickets: Record<string, Ticket> = {};
-const queues: Record<ServiceType, { nextNumber: number; waitingIds: string[] }> = {
+const queues: Record<
+  ServiceType,
+  { nextNumber: number; waitingIds: string[] }
+> = {
   S1: { nextNumber: 1, waitingIds: [] },
   S2: { nextNumber: 1, waitingIds: [] },
   S3: { nextNumber: 1, waitingIds: [] },
@@ -37,7 +54,8 @@ const queues: Record<ServiceType, { nextNumber: number; waitingIds: string[] }> 
 // Simple SSE hub
 const sseClients = new Set<{ id: string; res: any }>();
 function sendSSE(ev: QueueEvent) {
-  const data = `event: ${ev.type}\n` + `data: ${JSON.stringify(ev.payload)}\n\n`;
+  const data =
+    `event: ${ev.type}\n` + `data: ${JSON.stringify(ev.payload)}\n\n`;
   for (const { res } of sseClients) res.write(data);
 }
 
@@ -45,8 +63,12 @@ function snapshot(): QueueSnapshot {
   return { windows, services: queues, tickets };
 }
 
-
-function enqueue(service: ServiceType, notes?: string, ownerName?: string, woreda?: string): Ticket {
+function enqueue(
+  service: ServiceType,
+  notes?: string,
+  ownerName?: string,
+  woreda?: string,
+): Ticket {
   const number = queues[service].nextNumber++;
   const id = randomUUID();
   const t: Ticket = {
@@ -78,7 +100,10 @@ function updateDisplay() {
   const rows: DisplayRow[] = SERVICES.map((s) => {
     const nowServing = windows
       .filter((w) => w.currentTicketId)
-      .map((w) => ({ w, t: w.currentTicketId ? tickets[w.currentTicketId] : null }))
+      .map((w) => ({
+        w,
+        t: w.currentTicketId ? tickets[w.currentTicketId] : null,
+      }))
       .filter((x) => x.t && x.t!.service === s)
       .map(({ w, t }) => ({ code: t!.code, windowId: w.id }))[0] ?? {
       code: null,
@@ -102,7 +127,9 @@ export const sseHandler: RequestHandler = (req, res) => {
   const client = { id: randomUUID(), res };
   sseClients.add(client);
   const init: QueueEvent = { type: "init", payload: snapshot() };
-  res.write(`event: ${init.type}\n` + `data: ${JSON.stringify(init.payload)}\n\n`);
+  res.write(
+    `event: ${init.type}\n` + `data: ${JSON.stringify(init.payload)}\n\n`,
+  );
 
   req.on("close", () => {
     sseClients.delete(client);
@@ -110,8 +137,11 @@ export const sseHandler: RequestHandler = (req, res) => {
 };
 
 export const createTicket: RequestHandler = async (req, res) => {
-  const { service, notes, ownerName, woreda } = (req.body || {}) as CreateTicketRequest;
-  const svc = SERVICES.includes(service as ServiceType) ? (service as ServiceType) : "S1";
+  const { service, notes, ownerName, woreda } = (req.body ||
+    {}) as CreateTicketRequest;
+  const svc = SERVICES.includes(service as ServiceType)
+    ? (service as ServiceType)
+    : "S1";
   if (isDbEnabled) {
     const t = await createTicketDb(svc, notes, ownerName, woreda);
     sendSSE({ type: "ticket.created", payload: t });
@@ -134,12 +164,17 @@ export const callNext: RequestHandler = async (req, res) => {
 
   if (isDbEnabled) {
     const result = await callNextDb(windowId, service as ServiceType);
-    if (!result.ticket) return res.status(200).json({ message: "No tickets waiting" });
+    if (!result.ticket)
+      return res.status(200).json({ message: "No tickets waiting" });
     sendSSE({ type: "window.updated", payload: result.window });
     sendSSE({ type: "ticket.updated", payload: result.ticket });
     const rows = await displayRowsDb();
     sendSSE({ type: "display.updated", payload: rows });
-    return res.json({ window: result.window, ticket: result.ticket, display: rows });
+    return res.json({
+      window: result.window,
+      ticket: result.ticket,
+      display: rows,
+    });
   }
 
   const win = windows.find((w) => w.id === windowId);
@@ -244,7 +279,10 @@ export const transfer: RequestHandler = async (req, res) => {
   const { targetWindowId } = (req.body || {}) as TransferRequest;
   if (isDbEnabled) {
     try {
-      const { source, target, ticket } = await transferDb(windowId, Number(targetWindowId));
+      const { source, target, ticket } = await transferDb(
+        windowId,
+        Number(targetWindowId),
+      );
       sendSSE({ type: "window.updated", payload: source });
       sendSSE({ type: "window.updated", payload: target });
       sendSSE({ type: "ticket.updated", payload: ticket });
@@ -261,7 +299,8 @@ export const transfer: RequestHandler = async (req, res) => {
     return res.status(404).json({ error: "Source or target window not found" });
 
   const t = source.currentTicketId ? tickets[source.currentTicketId] : null;
-  if (!t) return res.status(400).json({ error: "No active ticket to transfer" });
+  if (!t)
+    return res.status(400).json({ error: "No active ticket to transfer" });
 
   source.currentTicketId = null;
   source.busy = false;

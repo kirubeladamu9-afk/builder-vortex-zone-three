@@ -1,5 +1,10 @@
 import { Pool } from "pg";
-import type { DisplayRow, ServiceType, Ticket, WindowState } from "../../shared/api";
+import type {
+  DisplayRow,
+  ServiceType,
+  Ticket,
+  WindowState,
+} from "../../shared/api";
 import { formatTicketCode } from "../../shared/api";
 
 export const isDbEnabled = Boolean(process.env.DATABASE_URL);
@@ -9,7 +14,10 @@ let pool: Pool | null = null;
 export function getPool() {
   if (!isDbEnabled) throw new Error("DB not enabled");
   if (!pool) {
-    pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+    pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false },
+    });
   }
   return pool;
 }
@@ -37,7 +45,9 @@ export async function initDb() {
     woreda text
   );`);
   // Backfill columns if table existed
-  await p.query(`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS owner_name text;`);
+  await p.query(
+    `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS owner_name text;`,
+  );
   await p.query(`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS woreda text;`);
   await p.query(`CREATE TABLE IF NOT EXISTS service_counters (
     service text primary key,
@@ -62,11 +72,22 @@ export async function initDb() {
 }
 
 export async function listWindowsDb(): Promise<WindowState[]> {
-  const { rows } = await getPool().query("SELECT id, name, current_ticket_id, busy, extract(epoch from updated_at)*1000 as updated_at FROM windows ORDER BY id");
-  return rows.map((r) => ({ id: r.id, name: r.name, currentTicketId: r.current_ticket_id, busy: r.busy, updatedAt: Math.round(Number(r.updated_at)) }));
+  const { rows } = await getPool().query(
+    "SELECT id, name, current_ticket_id, busy, extract(epoch from updated_at)*1000 as updated_at FROM windows ORDER BY id",
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    currentTicketId: r.current_ticket_id,
+    busy: r.busy,
+    updatedAt: Math.round(Number(r.updated_at)),
+  }));
 }
 
-async function nextNumber(service: ServiceType, client: Pool["connect"] extends (...args: any) => infer R ? R : any) {
+async function nextNumber(
+  service: ServiceType,
+  client: Pool["connect"] extends (...args: any) => infer R ? R : any,
+) {
   const res = await client.query(
     `UPDATE service_counters SET next_number = next_number + 1 WHERE service=$1 RETURNING next_number;`,
     [service],
@@ -75,7 +96,12 @@ async function nextNumber(service: ServiceType, client: Pool["connect"] extends 
   return next - 1;
 }
 
-export async function createTicketDb(service: ServiceType, notes?: string, ownerName?: string, woreda?: string): Promise<Ticket> {
+export async function createTicketDb(
+  service: ServiceType,
+  notes?: string,
+  ownerName?: string,
+  woreda?: string,
+): Promise<Ticket> {
   const p = getPool();
   const client = await p.connect();
   try {
@@ -90,7 +116,18 @@ export async function createTicketDb(service: ServiceType, notes?: string, owner
     );
     await client.query("COMMIT");
     const r = rows[0];
-    return { id: r.id, service: r.service, number: r.number, code: r.code, status: r.status, windowId: r.window_id, createdAt: Math.round(Number(r.created_at)), notes: r.notes ?? undefined, ownerName: r.owner_name ?? undefined, woreda: r.woreda ?? undefined };
+    return {
+      id: r.id,
+      service: r.service,
+      number: r.number,
+      code: r.code,
+      status: r.status,
+      windowId: r.window_id,
+      createdAt: Math.round(Number(r.created_at)),
+      notes: r.notes ?? undefined,
+      ownerName: r.owner_name ?? undefined,
+      woreda: r.woreda ?? undefined,
+    };
   } catch (e) {
     await client.query("ROLLBACK");
     throw e;
@@ -117,7 +154,10 @@ export async function callNextDb(windowId: number, service: ServiceType) {
       `UPDATE tickets SET status='serving', window_id=$1 WHERE id=$2 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes;`,
       [windowId, ticketId],
     );
-    await client.query(`UPDATE windows SET current_ticket_id=$1, busy=true, updated_at=now() WHERE id=$2`, [ticketId, windowId]);
+    await client.query(
+      `UPDATE windows SET current_ticket_id=$1, busy=true, updated_at=now() WHERE id=$2`,
+      [ticketId, windowId],
+    );
     await client.query("COMMIT");
     const ticket = rowToTicket(tRes.rows[0]);
     const window = await getWindow(p, windowId);
@@ -132,10 +172,15 @@ export async function callNextDb(windowId: number, service: ServiceType) {
 
 export async function recallDb(windowId: number) {
   const p = getPool();
-  const { rows } = await p.query(`SELECT t.* , extract(epoch from t.created_at)*1000 as created_at_ms
-    FROM windows w LEFT JOIN tickets t ON t.id = w.current_ticket_id WHERE w.id=$1`, [windowId]);
+  const { rows } = await p.query(
+    `SELECT t.* , extract(epoch from t.created_at)*1000 as created_at_ms
+    FROM windows w LEFT JOIN tickets t ON t.id = w.current_ticket_id WHERE w.id=$1`,
+    [windowId],
+  );
   const r = rows[0];
-  return { ticket: r ? rowToTicket({ ...r, created_at: r.created_at_ms }) : null };
+  return {
+    ticket: r ? rowToTicket({ ...r, created_at: r.created_at_ms }) : null,
+  };
 }
 
 export async function completeDb(windowId: number) {
@@ -145,10 +190,19 @@ export async function completeDb(windowId: number) {
     await client.query("BEGIN");
     const w = await getWindow(client, windowId);
     if (!w.currentTicketId) throw new Error("No active ticket");
-    const tRes = await client.query(`UPDATE tickets SET status='done' WHERE id=$1 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes;`, [w.currentTicketId]);
-    await client.query(`UPDATE windows SET current_ticket_id=NULL, busy=false, updated_at=now() WHERE id=$1`, [windowId]);
+    const tRes = await client.query(
+      `UPDATE tickets SET status='done' WHERE id=$1 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes;`,
+      [w.currentTicketId],
+    );
+    await client.query(
+      `UPDATE windows SET current_ticket_id=NULL, busy=false, updated_at=now() WHERE id=$1`,
+      [windowId],
+    );
     await client.query("COMMIT");
-    return { window: await getWindow(p, windowId), ticket: rowToTicket(tRes.rows[0]) };
+    return {
+      window: await getWindow(p, windowId),
+      ticket: rowToTicket(tRes.rows[0]),
+    };
   } catch (e) {
     await client.query("ROLLBACK");
     throw e;
@@ -164,10 +218,19 @@ export async function skipDb(windowId: number) {
     await client.query("BEGIN");
     const w = await getWindow(client, windowId);
     if (!w.currentTicketId) throw new Error("No active ticket");
-    const tRes = await client.query(`UPDATE tickets SET status='skipped' WHERE id=$1 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes;`, [w.currentTicketId]);
-    await client.query(`UPDATE windows SET current_ticket_id=NULL, busy=false, updated_at=now() WHERE id=$1`, [windowId]);
+    const tRes = await client.query(
+      `UPDATE tickets SET status='skipped' WHERE id=$1 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes;`,
+      [w.currentTicketId],
+    );
+    await client.query(
+      `UPDATE windows SET current_ticket_id=NULL, busy=false, updated_at=now() WHERE id=$1`,
+      [windowId],
+    );
     await client.query("COMMIT");
-    return { window: await getWindow(p, windowId), ticket: rowToTicket(tRes.rows[0]) };
+    return {
+      window: await getWindow(p, windowId),
+      ticket: rowToTicket(tRes.rows[0]),
+    };
   } catch (e) {
     await client.query("ROLLBACK");
     throw e;
@@ -185,12 +248,25 @@ export async function transferDb(windowId: number, targetWindowId: number) {
     const target = await getWindow(client, targetWindowId);
     if (!source.currentTicketId) throw new Error("No active ticket");
 
-    await client.query(`UPDATE windows SET current_ticket_id=NULL, busy=false, updated_at=now() WHERE id=$1`, [windowId]);
-    await client.query(`UPDATE windows SET current_ticket_id=$1, busy=true, updated_at=now() WHERE id=$2`, [source.currentTicketId, targetWindowId]);
-    const tRes = await client.query(`UPDATE tickets SET status='transferred', window_id=$1 WHERE id=$2 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes;`, [targetWindowId, source.currentTicketId]);
+    await client.query(
+      `UPDATE windows SET current_ticket_id=NULL, busy=false, updated_at=now() WHERE id=$1`,
+      [windowId],
+    );
+    await client.query(
+      `UPDATE windows SET current_ticket_id=$1, busy=true, updated_at=now() WHERE id=$2`,
+      [source.currentTicketId, targetWindowId],
+    );
+    const tRes = await client.query(
+      `UPDATE tickets SET status='transferred', window_id=$1 WHERE id=$2 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes;`,
+      [targetWindowId, source.currentTicketId],
+    );
     await client.query("COMMIT");
 
-    return { source: await getWindow(p, windowId), target: await getWindow(p, targetWindowId), ticket: rowToTicket(tRes.rows[0]) };
+    return {
+      source: await getWindow(p, windowId),
+      target: await getWindow(p, targetWindowId),
+      ticket: rowToTicket(tRes.rows[0]),
+    };
   } catch (e) {
     await client.query("ROLLBACK");
     throw e;
@@ -217,7 +293,9 @@ export async function displayRowsDb(): Promise<DisplayRow[]> {
     );
     rows.push({
       service: s,
-      nowServing: nowRes.rowCount ? { code: nowRes.rows[0].code, windowId: nowRes.rows[0].window_id } : { code: null, windowId: null },
+      nowServing: nowRes.rowCount
+        ? { code: nowRes.rows[0].code, windowId: nowRes.rows[0].window_id }
+        : { code: null, windowId: null },
       next: nextRes.rowCount ? nextRes.rows[0].code : null,
     });
   }
@@ -249,7 +327,13 @@ async function getWindow(clientOrPool: any, id: number): Promise<WindowState> {
     [id],
   );
   const r = rows[0];
-  return { id: r.id, name: r.name, currentTicketId: r.current_ticket_id, busy: r.busy, updatedAt: Math.round(Number(r.updated_at)) };
+  return {
+    id: r.id,
+    name: r.name,
+    currentTicketId: r.current_ticket_id,
+    busy: r.busy,
+    updatedAt: Math.round(Number(r.updated_at)),
+  };
 }
 
 // initialize on import
