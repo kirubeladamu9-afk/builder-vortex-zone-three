@@ -24,12 +24,22 @@ export default function Teller() {
     refetchOnWindowFocus: false,
   });
 
+  const [tickets, setTickets] = useState<Record<string, Ticket>>({});
+
   useSSE("/api/events", (ev) => {
+    if (ev.type === "init") {
+      setTickets(ev.payload.tickets);
+      qc.setQueryData(["windows"], ev.payload.windows as WindowState[]);
+    }
     if (ev.type === "window.updated") {
       qc.setQueryData<WindowState[]>(["windows"], (prev) => {
         if (!prev) return prev;
         return prev.map((w) => (w.id === ev.payload.id ? ev.payload : w));
       });
+    }
+    if (ev.type === "ticket.created" || ev.type === "ticket.updated") {
+      const t = ev.payload as Ticket;
+      setTickets((m) => ({ ...m, [t.id]: t }));
     }
   });
 
