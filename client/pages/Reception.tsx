@@ -334,7 +334,7 @@ export default function Reception() {
         ownerName: variables.ownerName,
         woreda: variables.woreda,
         notes: combinedNotes,
-        priorityCode: variables.priorityCode ?? "",
+        priorityCode: variables.priorityCode?.trim() ?? "",
         service: variables.service,
       });
       toast.success(`Ticket ${ticket.code} generated`);
@@ -378,7 +378,7 @@ export default function Reception() {
     ownerName,
     woreda,
     notes: previewNotes,
-    priorityCode,
+    priorityCode: priorityCode.trim(),
     service,
   };
   const previewDetails = generatedTicket && lastSubmission ? lastSubmission : draft;
