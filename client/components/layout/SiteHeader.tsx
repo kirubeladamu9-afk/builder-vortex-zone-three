@@ -9,6 +9,8 @@ const NAV_LINKS = [
   { label: "Overview", to: "/" },
   { label: "Reception Console", to: "/reception" },
   { label: "Virtual Queue", to: "/queue" },
+  { label: "Teller Console", to: "/teller" },
+  { label: "Display", to: "/display" },
 ];
 
 const SiteHeader = () => {
