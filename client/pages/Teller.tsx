@@ -22,6 +22,7 @@ export default function Teller() {
     queryKey: ["windows"],
     queryFn: async () => api<WindowState[]>("/api/windows"),
     refetchOnWindowFocus: false,
+    refetchInterval: 3000,
   });
 
   const [tickets, setTickets] = useState<Record<string, Ticket>>({});
