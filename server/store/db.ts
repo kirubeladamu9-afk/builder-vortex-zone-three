@@ -319,6 +319,8 @@ function rowToTicket(r: any): Ticket {
     windowId: r.window_id,
     createdAt: Math.round(Number(r.created_at)),
     notes: r.notes ?? undefined,
+    ownerName: r.owner_name ?? undefined,
+    woreda: r.woreda ?? undefined,
   };
 }
 
