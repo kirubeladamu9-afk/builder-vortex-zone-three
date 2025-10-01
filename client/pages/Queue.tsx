@@ -2,10 +2,9 @@ import {
   BellRing,
   Clock4,
   Compass,
-  MapPin,
   QrCode,
   SignalHigh,
-  Sparkle,
+  Sparkles,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -160,7 +159,7 @@ export default function Queue() {
                   <p className="text-xs uppercase tracking-widest">Action</p>
                   <p className="font-semibold">Please proceed to waiting area</p>
                 </div>
-                <Sparkle className="h-5 w-5" />
+                <Sparkles className="h-5 w-5" />
               </div>
 
               <div className="rounded-2xl border border-border/60 bg-background/70 p-4">
