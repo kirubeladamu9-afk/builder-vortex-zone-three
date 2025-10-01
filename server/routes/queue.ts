@@ -110,16 +110,16 @@ export const sseHandler: RequestHandler = (req, res) => {
 };
 
 export const createTicket: RequestHandler = async (req, res) => {
-  const { service, notes } = (req.body || {}) as CreateTicketRequest;
+  const { service, notes, ownerName, woreda } = (req.body || {}) as CreateTicketRequest;
   const svc = SERVICES.includes(service as ServiceType) ? (service as ServiceType) : "S1";
   if (isDbEnabled) {
-    const t = await createTicketDb(svc, notes);
+    const t = await createTicketDb(svc, notes, ownerName, woreda);
     sendSSE({ type: "ticket.created", payload: t });
     const rows = await displayRowsDb();
     sendSSE({ type: "display.updated", payload: rows });
     return res.status(201).json(t);
   }
-  const ticket = enqueue(svc, notes);
+  const ticket = enqueue(svc, notes, ownerName, woreda);
   res.status(201).json(ticket);
 };
 
