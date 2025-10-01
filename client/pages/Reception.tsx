@@ -66,29 +66,43 @@ export default function Reception() {
             Issue QR-powered tickets while giving staff guided confidence
           </h1>
           <p className="text-lg text-muted-foreground">
-            Replace scribbled paper with a structured console built for speed. Every ticket is generated with a single tap, instantly queued, and ready for the guest to scan.
+            Replace scribbled paper with a structured console built for speed.
+            Every ticket is generated with a single tap, instantly queued, and
+            ready for the guest to scan.
           </p>
           <div className="grid gap-5 sm:grid-cols-3">
             <div className="rounded-2xl border border-border/60 bg-background/60 p-5">
-              <p className="text-xs uppercase text-muted-foreground">Average issuance time</p>
+              <p className="text-xs uppercase text-muted-foreground">
+                Average issuance time
+              </p>
               <p className="mt-2 font-display text-2xl font-semibold text-foreground">
                 42 sec
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">From arrival to QR slip</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                From arrival to QR slip
+              </p>
             </div>
             <div className="rounded-2xl border border-border/60 bg-background/60 p-5">
-              <p className="text-xs uppercase text-muted-foreground">Priority handling</p>
+              <p className="text-xs uppercase text-muted-foreground">
+                Priority handling
+              </p>
               <p className="mt-2 font-display text-2xl font-semibold text-foreground">
                 Auto alerts
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">Accessibility & VIP ready</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Accessibility & VIP ready
+              </p>
             </div>
             <div className="rounded-2xl border border-border/60 bg-background/60 p-5">
-              <p className="text-xs uppercase text-muted-foreground">Training time</p>
+              <p className="text-xs uppercase text-muted-foreground">
+                Training time
+              </p>
               <p className="mt-2 font-display text-2xl font-semibold text-foreground">
                 <span className="text-primary">1 shift</span>
               </p>
-              <p className="mt-1 text-xs text-muted-foreground">Guided onboarding module</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Guided onboarding module
+              </p>
             </div>
           </div>
           <div className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-lg shadow-primary/10">
@@ -96,7 +110,8 @@ export default function Reception() {
               Reception script at a glance
             </h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              Empower new hires with a consistent approach. Prompts evolve as fields are completed to keep conversations smooth.
+              Empower new hires with a consistent approach. Prompts evolve as
+              fields are completed to keep conversations smooth.
             </p>
             <ul className="mt-5 space-y-3 text-sm text-muted-foreground">
               {SCRIPT_POINTS.map((step, index) => (
@@ -121,14 +136,18 @@ export default function Reception() {
               Issue virtual ticket
             </CardTitle>
             <CardDescription>
-              Capture the essentials, click “Generate QR Ticket”, and hand the guest a slip—or mirror the QR on screen.
+              Capture the essentials, click “Generate QR Ticket”, and hand the
+              guest a slip—or mirror the QR on screen.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="customer-name">Customer name</Label>
-                <Input id="customer-name" placeholder="Add guest or organization name" />
+                <Input
+                  id="customer-name"
+                  placeholder="Add guest or organization name"
+                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="service-type">Service type</Label>
@@ -162,16 +181,25 @@ export default function Reception() {
               </div>
             </div>
             <div className="rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm text-primary">
-              <p className="font-semibold uppercase tracking-wide">Ticket preview</p>
+              <p className="font-semibold uppercase tracking-wide">
+                Ticket preview
+              </p>
               <div className="mt-3 grid gap-2 text-primary/80">
                 <p>
-                  <span className="font-semibold text-primary">Ticket:</span> S1-015
+                  <span className="font-semibold text-primary">Ticket:</span>{" "}
+                  S1-015
                 </p>
                 <p>
-                  <span className="font-semibold text-primary">Queue position:</span> 4th in line
+                  <span className="font-semibold text-primary">
+                    Queue position:
+                  </span>{" "}
+                  4th in line
                 </p>
                 <p>
-                  <span className="font-semibold text-primary">Tracking URL:</span> qflowhq.com/tickets/S1-015
+                  <span className="font-semibold text-primary">
+                    Tracking URL:
+                  </span>{" "}
+                  qflowhq.com/tickets/S1-015
                 </p>
               </div>
             </div>
@@ -179,7 +207,8 @@ export default function Reception() {
               Generate QR Ticket
             </Button>
             <p className="text-center text-xs text-muted-foreground">
-              QR auto-refreshes every 60 seconds. Print or display to the guest instantly.
+              QR auto-refreshes every 60 seconds. Print or display to the guest
+              instantly.
             </p>
           </CardContent>
         </Card>
@@ -188,7 +217,10 @@ export default function Reception() {
       <section className="border-t border-border/60 bg-foreground/5 py-16">
         <div className="container grid gap-8 lg:grid-cols-3">
           {RECEPTION_GAINS.map((item) => (
-            <Card key={item.title} className="border-border/60 bg-card/80 p-6 shadow-md shadow-primary/5">
+            <Card
+              key={item.title}
+              className="border-border/60 bg-card/80 p-6 shadow-md shadow-primary/5"
+            >
               <CardHeader className="space-y-3">
                 <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <item.icon className="h-6 w-6" />

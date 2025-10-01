@@ -16,13 +16,21 @@ const SiteFooter = () => {
             </span>
           </div>
           <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-            Transform long lines into effortless experiences. Our QR-powered virtual queuing gives teams real-time control and guests the freedom to wait comfortably from anywhere.
+            Transform long lines into effortless experiences. Our QR-powered
+            virtual queuing gives teams real-time control and guests the freedom
+            to wait comfortably from anywhere.
           </p>
           <div className="flex flex-wrap gap-3 text-sm font-medium text-muted-foreground">
-            <a className="inline-flex items-center gap-2 hover:text-foreground" href="mailto:hello@qflowhq.com">
+            <a
+              className="inline-flex items-center gap-2 hover:text-foreground"
+              href="mailto:hello@qflowhq.com"
+            >
               <Mail className="h-4 w-4" /> hello@qflowhq.com
             </a>
-            <a className="inline-flex items-center gap-2 hover:text-foreground" href="tel:+15551234567">
+            <a
+              className="inline-flex items-center gap-2 hover:text-foreground"
+              href="tel:+15551234567"
+            >
               <Phone className="h-4 w-4" /> +1 (555) 123-4567
             </a>
           </div>
@@ -34,17 +42,26 @@ const SiteFooter = () => {
           </span>
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li>
-              <Link className="flex items-center gap-2 hover:text-foreground" to="/">
+              <Link
+                className="flex items-center gap-2 hover:text-foreground"
+                to="/"
+              >
                 Overview <ArrowUpRight className="h-4 w-4" />
               </Link>
             </li>
             <li>
-              <Link className="flex items-center gap-2 hover:text-foreground" to="/reception">
+              <Link
+                className="flex items-center gap-2 hover:text-foreground"
+                to="/reception"
+              >
                 Reception Console <ArrowUpRight className="h-4 w-4" />
               </Link>
             </li>
             <li>
-              <Link className="flex items-center gap-2 hover:text-foreground" to="/queue">
+              <Link
+                className="flex items-center gap-2 hover:text-foreground"
+                to="/queue"
+              >
                 Live Queue Monitor <ArrowUpRight className="h-4 w-4" />
               </Link>
             </li>
@@ -57,17 +74,26 @@ const SiteFooter = () => {
           </span>
           <ul className="space-y-3 text-sm text-muted-foreground">
             <li>
-              <a className="flex items-center gap-2 hover:text-foreground" href="#get-started">
+              <a
+                className="flex items-center gap-2 hover:text-foreground"
+                href="#get-started"
+              >
                 Implementation Guide <ArrowUpRight className="h-4 w-4" />
               </a>
             </li>
             <li>
-              <a className="flex items-center gap-2 hover:text-foreground" href="#analytics">
+              <a
+                className="flex items-center gap-2 hover:text-foreground"
+                href="#analytics"
+              >
                 Analytics Dashboard <ArrowUpRight className="h-4 w-4" />
               </a>
             </li>
             <li>
-              <a className="flex items-center gap-2 hover:text-foreground" href="#faq">
+              <a
+                className="flex items-center gap-2 hover:text-foreground"
+                href="#faq"
+              >
                 FAQs <ArrowUpRight className="h-4 w-4" />
               </a>
             </li>
@@ -76,7 +102,10 @@ const SiteFooter = () => {
       </div>
       <div className="border-t border-border/60 bg-background/60 py-5">
         <div className="container flex flex-col gap-3 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
-          <span>© {new Date().getFullYear()} QFlow Technologies. All rights reserved.</span>
+          <span>
+            © {new Date().getFullYear()} QFlow Technologies. All rights
+            reserved.
+          </span>
           <div className="flex flex-wrap items-center gap-4">
             <a className="hover:text-foreground" href="#privacy">
               Privacy
@@ -84,7 +113,10 @@ const SiteFooter = () => {
             <a className="hover:text-foreground" href="#terms">
               Terms
             </a>
-            <a className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-primary" href="#status">
+            <a
+              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-primary"
+              href="#status"
+            >
               <span className="h-2 w-2 animate-pulse rounded-full bg-primary" />
               Live status
             </a>

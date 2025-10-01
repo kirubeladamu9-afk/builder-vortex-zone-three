@@ -71,7 +71,11 @@ const SiteHeader = () => {
           onClick={toggleMenu}
           aria-label={isMenuOpen ? "Close menu" : "Open menu"}
         >
-          {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          {isMenuOpen ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Menu className="h-5 w-5" />
+          )}
         </Button>
       </div>
 
@@ -101,7 +105,11 @@ const SiteHeader = () => {
               {item.label}
             </NavLink>
           ))}
-          <Button onClick={closeMenu} asChild className="h-11 text-base font-semibold">
+          <Button
+            onClick={closeMenu}
+            asChild
+            className="h-11 text-base font-semibold"
+          >
             <a href="#get-started">Get Started</a>
           </Button>
         </div>

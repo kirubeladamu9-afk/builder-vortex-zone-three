@@ -22,17 +22,20 @@ import { cn } from "@/lib/utils";
 const STATUS_STEPS = [
   {
     title: "Scan QR",
-    description: "Guests unlock their live ticket from any device—no sign-in required.",
+    description:
+      "Guests unlock their live ticket from any device—no sign-in required.",
     icon: QrCode,
   },
   {
     title: "Track position",
-    description: "Every refresh recalculates wait time using the latest throughput data.",
+    description:
+      "Every refresh recalculates wait time using the latest throughput data.",
     icon: Clock4,
   },
   {
     title: "Get notified",
-    description: "Highlighted alerts prompt guests when it’s time to move toward the window.",
+    description:
+      "Highlighted alerts prompt guests when it’s time to move toward the window.",
     icon: BellRing,
   },
 ];
@@ -50,15 +53,17 @@ const QR_DISPLAY_MATRIX = [
 const QueueQRCode = () => (
   <div className="grid grid-cols-7 gap-1 rounded-2xl bg-white p-3 shadow-inner shadow-primary/10">
     {QR_DISPLAY_MATRIX.flatMap((row, rowIndex) =>
-      row.split("").map((cell, cellIndex) => (
-        <span
-          key={`${rowIndex}-${cellIndex}`}
-          className={cn(
-            "h-2 w-2 rounded-[2px] md:h-3 md:w-3",
-            cell === "1" ? "bg-foreground" : "bg-muted",
-          )}
-        />
-      )),
+      row
+        .split("")
+        .map((cell, cellIndex) => (
+          <span
+            key={`${rowIndex}-${cellIndex}`}
+            className={cn(
+              "h-2 w-2 rounded-[2px] md:h-3 md:w-3",
+              cell === "1" ? "bg-foreground" : "bg-muted",
+            )}
+          />
+        )),
     )}
   </div>
 );
@@ -93,7 +98,9 @@ export default function Queue() {
             A personal status hub that keeps guests relaxed and ready
           </h1>
           <p className="text-lg text-muted-foreground">
-            Each QR ticket leads to a responsive web experience with live queue position, estimated wait, and clear prompts. Guests stay informed without lingering near the counter.
+            Each QR ticket leads to a responsive web experience with live queue
+            position, estimated wait, and clear prompts. Guests stay informed
+            without lingering near the counter.
           </p>
           <div className="rounded-3xl border border-border/60 bg-card/80 p-6 shadow-lg shadow-primary/10">
             <h2 className="font-display text-2xl font-semibold text-foreground">
@@ -109,8 +116,12 @@ export default function Queue() {
                     <step.icon className="h-5 w-5" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold text-foreground">{step.title}</p>
-                    <p className="text-sm text-muted-foreground">{step.description}</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      {step.title}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {step.description}
+                    </p>
                   </div>
                 </li>
               ))}
@@ -126,7 +137,9 @@ export default function Queue() {
                 <SignalHigh className="h-4 w-4" /> Live queue synced
               </div>
               <CardTitle className="text-2xl">Ticket S1-015</CardTitle>
-              <CardDescription>Social Security Renewal · Window 3</CardDescription>
+              <CardDescription>
+                Social Security Renewal · Window 3
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="rounded-2xl border border-border/60 bg-background/70 p-4 text-sm">
@@ -149,7 +162,9 @@ export default function Queue() {
                     <p className="mt-1 font-display text-2xl font-semibold text-foreground">
                       {item.value}
                     </p>
-                    <p className="text-xs text-muted-foreground">{item.context}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.context}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -157,7 +172,9 @@ export default function Queue() {
               <div className="flex items-center justify-between rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm text-primary">
                 <div>
                   <p className="text-xs uppercase tracking-widest">Action</p>
-                  <p className="font-semibold">Please proceed to waiting area</p>
+                  <p className="font-semibold">
+                    Please proceed to waiting area
+                  </p>
                 </div>
                 <Sparkles className="h-5 w-5" />
               </div>
@@ -170,7 +187,9 @@ export default function Queue() {
                 <div className="mt-4 flex items-center justify-between gap-4">
                   <QueueQRCode />
                   <div className="space-y-2 text-xs text-muted-foreground">
-                    <p className="text-sm font-semibold text-foreground">Tracking URL</p>
+                    <p className="text-sm font-semibold text-foreground">
+                      Tracking URL
+                    </p>
                     <p className="rounded-full bg-card px-3 py-1 font-medium text-primary">
                       qflowhq.com/tickets/S1-015
                     </p>
@@ -185,22 +204,33 @@ export default function Queue() {
 
       <section className="border-t border-border/60 bg-foreground/5 py-16">
         <div className="container grid gap-8 lg:grid-cols-3">
-          {["Displays mirror Now Serving", "Accessible fallback via concierge", "Multi-language prompts included"].map((item) => (
-            <Card key={item} className="border-border/60 bg-card/80 p-6 shadow-md shadow-primary/10">
+          {[
+            "Displays mirror Now Serving",
+            "Accessible fallback via concierge",
+            "Multi-language prompts included",
+          ].map((item) => (
+            <Card
+              key={item}
+              className="border-border/60 bg-card/80 p-6 shadow-md shadow-primary/10"
+            >
               <CardHeader className="space-y-3">
                 <Compass className="h-6 w-6 text-primary" />
                 <CardTitle className="text-lg">{item}</CardTitle>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-sm text-muted-foreground">
-                  Guests always have a clear path forward, whether via QR scans, concierge support, or immersive lobby signage.
+                  Guests always have a clear path forward, whether via QR scans,
+                  concierge support, or immersive lobby signage.
                 </CardDescription>
               </CardContent>
             </Card>
           ))}
         </div>
         <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
-          <Button size="lg" className="h-12 px-6 text-base shadow-lg shadow-primary/20">
+          <Button
+            size="lg"
+            className="h-12 px-6 text-base shadow-lg shadow-primary/20"
+          >
             Download lobby signage kit
           </Button>
           <Button variant="outline" size="lg" className="h-12 px-6 text-base">
