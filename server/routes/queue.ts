@@ -12,7 +12,7 @@ import {
   TransferRequest,
   WindowState,
   formatTicketCode,
-} from "@shared/api";
+} from "../../shared/api";
 import { isDbEnabled, listWindowsDb, createTicketDb, callNextDb, recallDb, completeDb, skipDb, transferDb, displayRowsDb, seedDemoDb } from "../store/db";
 
 // In-memory store (can be swapped with DB adapter)
