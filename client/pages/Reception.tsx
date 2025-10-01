@@ -206,7 +206,7 @@ function TicketPreview({ ticket, details, selectedService, isGenerating }: Ticke
     return () => {
       isActive = false;
     };
-  }, [ticket, details.ownerName, details.woreda]);
+  }, [ticket, details.ownerName, details.woreda, details.notes]);
 
   const display = ticket
     ? {
