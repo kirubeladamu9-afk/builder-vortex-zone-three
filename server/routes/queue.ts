@@ -24,6 +24,7 @@ import {
   transferDb,
   displayRowsDb,
   seedDemoDb,
+  getPool,
 } from "../store/db";
 
 // In-memory store (can be swapped with DB adapter)
@@ -118,7 +119,7 @@ function updateDisplay() {
   return rows;
 }
 
-export const sseHandler: RequestHandler = (req, res) => {
+export const sseHandler: RequestHandler = async (req, res) => {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
@@ -126,10 +127,63 @@ export const sseHandler: RequestHandler = (req, res) => {
 
   const client = { id: randomUUID(), res };
   sseClients.add(client);
-  const init: QueueEvent = { type: "init", payload: snapshot() };
-  res.write(
-    `event: ${init.type}\n` + `data: ${JSON.stringify(init.payload)}\n\n`,
-  );
+
+  let payload: any;
+  if (isDbEnabled) {
+    try {
+      const p = getPool();
+      const windowsDb = await listWindowsDb();
+
+      const ticketsRes = await p.query(
+        `SELECT id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes, owner_name, woreda
+         FROM tickets`,
+      );
+      const ticketsMap: Record<string, Ticket> = {};
+      for (const r of ticketsRes.rows) {
+        ticketsMap[r.id] = {
+          id: r.id,
+          service: r.service,
+          number: r.number,
+          code: r.code,
+          status: r.status,
+          windowId: r.window_id,
+          createdAt: Math.round(Number(r.created_at)),
+          notes: r.notes ?? undefined,
+          ownerName: r.owner_name ?? undefined,
+          woreda: r.woreda ?? undefined,
+        };
+      }
+
+      const countersRes = await p.query(
+        `SELECT service, next_number FROM service_counters`,
+      );
+      const waitingRes = await p.query(
+        `SELECT id, service FROM tickets WHERE status='waiting' ORDER BY created_at, number`,
+      );
+      const servicesState: Record<ServiceType, { nextNumber: number; waitingIds: string[] }> = {
+        S1: { nextNumber: 1, waitingIds: [] },
+        S2: { nextNumber: 1, waitingIds: [] },
+        S3: { nextNumber: 1, waitingIds: [] },
+      };
+      for (const r of countersRes.rows) {
+        const svc = r.service as ServiceType;
+        if (servicesState[svc]) servicesState[svc].nextNumber = Number(r.next_number);
+      }
+      for (const r of waitingRes.rows) {
+        const svc = r.service as ServiceType;
+        if (servicesState[svc]) servicesState[svc].waitingIds.push(r.id);
+      }
+
+      payload = { windows: windowsDb, services: servicesState, tickets: ticketsMap };
+    } catch (e) {
+      payload = snapshot();
+    }
+  } else {
+    payload = snapshot();
+  }
+
+  const init: QueueEvent = { type: "init", payload };
+  res.write(`event: ${init.type}\n` + `data: ${JSON.stringify(init.payload)}\n\n`);
 
   req.on("close", () => {
     sseClients.delete(client);
