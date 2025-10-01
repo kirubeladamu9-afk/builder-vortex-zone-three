@@ -44,9 +44,6 @@ function snapshot(): QueueSnapshot {
   return { windows, services: queues, tickets };
 }
 
-function codeFor(service: ServiceType, number: number) {
-  return `${service}-${String(number).padStart(3, "0")}`;
-}
 
 function enqueue(service: ServiceType, notes?: string): Ticket {
   const number = queues[service].nextNumber++;
@@ -55,7 +52,7 @@ function enqueue(service: ServiceType, notes?: string): Ticket {
     id,
     service,
     number,
-    code: codeFor(service, number),
+    code: formatTicketCode(service, number),
     status: "waiting",
     windowId: null,
     createdAt: Date.now(),
