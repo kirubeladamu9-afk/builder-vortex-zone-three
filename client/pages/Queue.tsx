@@ -64,10 +64,6 @@ export default function Queue() {
     if (ev.type === "display.updated") setRows(ev.payload as DisplayRow[]);
   });
 
-  const active = useMemo(() => {
-    return rows.find((r) => r.service === "S1") || rows[0] || null;
-  }, [rows]);
-
   return (
     <div className="relative overflow-hidden">
       <section className="container grid gap-12 py-16 lg:grid-cols-[1fr,0.9fr] lg:items-start">
@@ -102,51 +98,36 @@ export default function Queue() {
               <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                 <SignalHigh className="h-4 w-4" /> {rows.length ? "Live queue synced" : "Waiting for updates"}
               </div>
-              <CardTitle className="text-2xl">{active ? `Service ${active.service.slice(1)}` : "Live Queue"}</CardTitle>
-              <CardDescription>
-                {active?.nowServing.code ? (
-                  <span>
-                    Now Serving · {active.nowServing.code}
-                    {active.nowServing.windowId ? ` · Window ${active.nowServing.windowId}` : ""}
-                  </span>
-                ) : (
-                  <span>No active ticket</span>
-                )}
-              </CardDescription>
+              <CardTitle className="text-2xl">Live Queue</CardTitle>
+              <CardDescription>Now Serving and On Deck by service</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="rounded-2xl border border-border/60 bg-background/70 p-4 text-sm">
-                <div className="flex items-center justify-between text-muted-foreground">
-                  <span>Queue confidence</span>
-                  <span>{rows.length ? 87 : 0}%</span>
+            <CardContent className="space-y-4">
+              {rows.map((r) => (
+                <div key={r.service} className="rounded-2xl border border-border/60 bg-background/70 p-4">
+                  <div className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">
+                    Service {r.service.slice(1)}
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl bg-card/80 p-4">
+                      <p className="text-xs uppercase tracking-widest text-muted-foreground">On deck</p>
+                      <p className="mt-1 font-display text-2xl font-semibold text-foreground">{r.next ?? "—"}</p>
+                      <p className="text-xs text-muted-foreground">Please head to the waiting area</p>
+                    </div>
+                    <div className="rounded-2xl bg-card/80 p-4">
+                      <p className="text-xs uppercase tracking-widest text-muted-foreground">Now serving</p>
+                      <p className="mt-1 font-display text-2xl font-semibold text-foreground">{r.nowServing.code ?? "—"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {r.nowServing.code ? (r.nowServing.windowId ? `Window ${r.nowServing.windowId}` : "Please be ready") : "Stand by for your turn"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <Progress value={rows.length ? 87 : 0} className="mt-3 h-3" />
-                <p className="mt-2 text-xs text-muted-foreground">Calculated using throughput across active service windows.</p>
-              </div>
-
-              <div className="grid gap-3 rounded-2xl border border-border/60 bg-background/70 p-4">
-                <div className="rounded-2xl bg-card/80 p-4">
-                  <p className="text-xs uppercase tracking-widest text-muted-foreground">On deck</p>
-                  <p className="mt-1 font-display text-2xl font-semibold text-foreground">{active?.next ?? "—"}</p>
-                  <p className="text-xs text-muted-foreground">Please head to the waiting area</p>
-                </div>
-                <div className="rounded-2xl bg-card/80 p-4">
-                  <p className="text-xs uppercase tracking-widest text-muted-foreground">Now serving</p>
-                  <p className="mt-1 font-display text-2xl font-semibold text-foreground">{active?.nowServing.code ?? "—"}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {active?.nowServing.code ? (
-                      active.nowServing.windowId ? `Window ${active.nowServing.windowId}` : "Please be ready"
-                    ) : (
-                      "Stand by for your turn"
-                    )}
-                  </p>
-                </div>
-              </div>
+              ))}
 
               <div className="flex items-center justify-between rounded-2xl border border-primary/40 bg-primary/10 p-4 text-sm text-primary">
                 <div>
                   <p className="text-xs uppercase tracking-widest">Action</p>
-                  <p className="font-semibold">{active?.nowServing.code ? "Please proceed when called" : "Please proceed to waiting area"}</p>
+                  <p className="font-semibold">{rows.some((r) => r.nowServing.code) ? "Please proceed when called" : "Please proceed to waiting area"}</p>
                 </div>
                 <Sparkles className="h-5 w-5" />
               </div>
