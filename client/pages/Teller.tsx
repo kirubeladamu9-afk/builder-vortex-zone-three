@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSSE } from "@/hooks/use-sse";
-import type { WindowState } from "@shared/api";
+import type { Ticket, WindowState } from "@shared/api";
 import { toast } from "sonner";
 
 async function api<T>(path: string, opts?: RequestInit) {
