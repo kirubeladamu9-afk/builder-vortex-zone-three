@@ -13,6 +13,7 @@ import {
   WindowState,
   formatTicketCode,
 } from "@shared/api";
+import { isDbEnabled, listWindowsDb, createTicketDb, callNextDb, recallDb, completeDb, skipDb, transferDb, displayRowsDb, seedDemoDb } from "../store/db";
 
 // In-memory store (can be swapped with DB adapter)
 const WINDOWS_COUNT = 6;
@@ -106,20 +107,39 @@ export const sseHandler: RequestHandler = (req, res) => {
   });
 };
 
-export const createTicket: RequestHandler = (req, res) => {
+export const createTicket: RequestHandler = async (req, res) => {
   const { service, notes } = (req.body || {}) as CreateTicketRequest;
   const svc = SERVICES.includes(service as ServiceType) ? (service as ServiceType) : "S1";
+  if (isDbEnabled) {
+    const t = await createTicketDb(svc, notes);
+    sendSSE({ type: "ticket.created", payload: t });
+    const rows = await displayRowsDb();
+    sendSSE({ type: "display.updated", payload: rows });
+    return res.status(201).json(t);
+  }
   const ticket = enqueue(svc, notes);
   res.status(201).json(ticket);
 };
 
-export const listWindows: RequestHandler = (_req, res) => {
+export const listWindows: RequestHandler = async (_req, res) => {
+  if (isDbEnabled) return res.json(await listWindowsDb());
   res.json(windows);
 };
 
-export const callNext: RequestHandler = (req, res) => {
+export const callNext: RequestHandler = async (req, res) => {
   const windowId = Number(req.params.id);
   const { service = "S1" } = (req.body || {}) as CallNextRequest;
+
+  if (isDbEnabled) {
+    const result = await callNextDb(windowId, service as ServiceType);
+    if (!result.ticket) return res.status(200).json({ message: "No tickets waiting" });
+    sendSSE({ type: "window.updated", payload: result.window });
+    sendSSE({ type: "ticket.updated", payload: result.ticket });
+    const rows = await displayRowsDb();
+    sendSSE({ type: "display.updated", payload: rows });
+    return res.json({ window: result.window, ticket: result.ticket, display: rows });
+  }
+
   const win = windows.find((w) => w.id === windowId);
   if (!win) return res.status(404).json({ error: "Window not found" });
 
@@ -138,8 +158,15 @@ export const callNext: RequestHandler = (req, res) => {
   res.json({ window: win, ticket: next, display: rows });
 };
 
-export const recall: RequestHandler = (req, res) => {
+export const recall: RequestHandler = async (req, res) => {
   const windowId = Number(req.params.id);
+  if (isDbEnabled) {
+    const { ticket } = await recallDb(windowId);
+    if (!ticket) return res.status(400).json({ error: "No active ticket" });
+    const rows = await displayRowsDb();
+    sendSSE({ type: "display.updated", payload: rows });
+    return res.json({ ok: true, ticket, display: rows });
+  }
   const win = windows.find((w) => w.id === windowId);
   if (!win) return res.status(404).json({ error: "Window not found" });
   const t = win.currentTicketId ? tickets[win.currentTicketId] : null;
@@ -149,8 +176,20 @@ export const recall: RequestHandler = (req, res) => {
   res.json({ ok: true, ticket: t, display: rows });
 };
 
-export const complete: RequestHandler = (req, res) => {
+export const complete: RequestHandler = async (req, res) => {
   const windowId = Number(req.params.id);
+  if (isDbEnabled) {
+    try {
+      const { window, ticket } = await completeDb(windowId);
+      sendSSE({ type: "window.updated", payload: window });
+      sendSSE({ type: "ticket.updated", payload: ticket });
+      const rows = await displayRowsDb();
+      sendSSE({ type: "display.updated", payload: rows });
+      return res.json({ ok: true, ticket, window, display: rows });
+    } catch (e: any) {
+      return res.status(400).json({ error: e.message || String(e) });
+    }
+  }
   const win = windows.find((w) => w.id === windowId);
   if (!win) return res.status(404).json({ error: "Window not found" });
   const t = win.currentTicketId ? tickets[win.currentTicketId] : null;
@@ -168,8 +207,20 @@ export const complete: RequestHandler = (req, res) => {
   res.json({ ok: true, ticket: t, window: win, display: rows });
 };
 
-export const skip: RequestHandler = (req, res) => {
+export const skip: RequestHandler = async (req, res) => {
   const windowId = Number(req.params.id);
+  if (isDbEnabled) {
+    try {
+      const { window, ticket } = await skipDb(windowId);
+      sendSSE({ type: "window.updated", payload: window });
+      sendSSE({ type: "ticket.updated", payload: ticket });
+      const rows = await displayRowsDb();
+      sendSSE({ type: "display.updated", payload: rows });
+      return res.json({ ok: true, ticket, window, display: rows });
+    } catch (e: any) {
+      return res.status(400).json({ error: e.message || String(e) });
+    }
+  }
   const win = windows.find((w) => w.id === windowId);
   if (!win) return res.status(404).json({ error: "Window not found" });
   const t = win.currentTicketId ? tickets[win.currentTicketId] : null;
@@ -186,9 +237,22 @@ export const skip: RequestHandler = (req, res) => {
   res.json({ ok: true, ticket: t, window: win, display: rows });
 };
 
-export const transfer: RequestHandler = (req, res) => {
+export const transfer: RequestHandler = async (req, res) => {
   const windowId = Number(req.params.id);
   const { targetWindowId } = (req.body || {}) as TransferRequest;
+  if (isDbEnabled) {
+    try {
+      const { source, target, ticket } = await transferDb(windowId, Number(targetWindowId));
+      sendSSE({ type: "window.updated", payload: source });
+      sendSSE({ type: "window.updated", payload: target });
+      sendSSE({ type: "ticket.updated", payload: ticket });
+      const rows = await displayRowsDb();
+      sendSSE({ type: "display.updated", payload: rows });
+      return res.json({ ok: true, ticket, source, target, display: rows });
+    } catch (e: any) {
+      return res.status(400).json({ error: e.message || String(e) });
+    }
+  }
   const source = windows.find((w) => w.id === windowId);
   const target = windows.find((w) => w.id === Number(targetWindowId));
   if (!source || !target)
@@ -215,14 +279,25 @@ export const transfer: RequestHandler = (req, res) => {
   res.json({ ok: true, ticket: t, source, target, display: rows });
 };
 
-export const displayData: RequestHandler = (_req, res) => {
+export const displayData: RequestHandler = async (_req, res) => {
+  if (isDbEnabled) {
+    const rows = await displayRowsDb();
+    const response: DisplayResponse = { rows };
+    return res.json(response);
+  }
   const rows = updateDisplay();
   const response: DisplayResponse = { rows };
   res.json(response);
 };
 
 // Demo seeding for quicker preview
-export const seedDemo: RequestHandler = (_req, res) => {
+export const seedDemo: RequestHandler = async (_req, res) => {
+  if (isDbEnabled) {
+    await seedDemoDb();
+    const rows = await displayRowsDb();
+    sendSSE({ type: "display.updated", payload: rows });
+    return res.json({ ok: true });
+  }
   for (let i = 0; i < 5; i++) enqueue("S1");
   for (let i = 0; i < 5; i++) enqueue("S2");
   for (let i = 0; i < 5; i++) enqueue("S3");
