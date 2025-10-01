@@ -75,7 +75,7 @@ async function nextNumber(service: ServiceType, client: Pool["connect"] extends 
   return next - 1;
 }
 
-export async function createTicketDb(service: ServiceType, notes?: string): Promise<Ticket> {
+export async function createTicketDb(service: ServiceType, notes?: string, ownerName?: string, woreda?: string): Promise<Ticket> {
   const p = getPool();
   const client = await p.connect();
   try {
@@ -83,14 +83,14 @@ export async function createTicketDb(service: ServiceType, notes?: string): Prom
     const number = await nextNumber(service, client);
     const code = formatTicketCode(service, number);
     const { rows } = await client.query(
-      `INSERT INTO tickets (id, service, number, code, status, window_id, notes)
-       VALUES (gen_random_uuid(), $1, $2, $3, 'waiting', NULL, $4)
-       RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes;`,
-      [service, number, code, notes ?? null],
+      `INSERT INTO tickets (id, service, number, code, status, window_id, notes, owner_name, woreda)
+       VALUES (gen_random_uuid(), $1, $2, $3, 'waiting', NULL, $4, $5, $6)
+       RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes, owner_name, woreda;`,
+      [service, number, code, notes ?? null, ownerName ?? null, woreda ?? null],
     );
     await client.query("COMMIT");
     const r = rows[0];
-    return { id: r.id, service: r.service, number: r.number, code: r.code, status: r.status, windowId: r.window_id, createdAt: Math.round(Number(r.created_at)), notes: r.notes ?? undefined };
+    return { id: r.id, service: r.service, number: r.number, code: r.code, status: r.status, windowId: r.window_id, createdAt: Math.round(Number(r.created_at)), notes: r.notes ?? undefined, ownerName: r.owner_name ?? undefined, woreda: r.woreda ?? undefined };
   } catch (e) {
     await client.query("ROLLBACK");
     throw e;
