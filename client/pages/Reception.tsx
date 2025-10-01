@@ -193,6 +193,7 @@ function TicketPreview({ ticket, details, selectedService, isGenerating }: Ticke
       service: ticket.service,
       ownerName: ticket.ownerName ?? details.ownerName,
       woreda: ticket.woreda ?? details.woreda,
+      notes: ticket.notes ?? details.notes,
       createdAt: ticket.createdAt,
     };
     QRCode.toDataURL(JSON.stringify(payload), { width: 240, margin: 1 })
