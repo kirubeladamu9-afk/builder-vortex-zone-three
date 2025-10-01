@@ -11,6 +11,7 @@ import {
   Ticket,
   TransferRequest,
   WindowState,
+  formatTicketCode,
 } from "@shared/api";
 
 // In-memory store (can be swapped with DB adapter)
