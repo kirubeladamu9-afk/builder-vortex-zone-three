@@ -1,22 +1,35 @@
 import { useEffect, useState } from "react";
+import { Card } from "@/components/ui/card";
 import { useSSE } from "@/hooks/use-sse";
-import type { DisplayResponse, DisplayRow } from "@shared/api";
+import type { Ticket, WindowState } from "@shared/api";
 
-async function getDisplay(): Promise<DisplayResponse> {
-  const res = await fetch("/api/display");
-  if (!res.ok) throw new Error("Failed to fetch display");
+async function getWindows(): Promise<WindowState[]> {
+  const res = await fetch("/api/windows");
+  if (!res.ok) throw new Error("Failed to fetch windows");
   return res.json();
 }
 
 export default function Display() {
-  const [rows, setRows] = useState<DisplayRow[]>([]);
+  const [windows, setWindows] = useState<WindowState[]>([]);
+  const [tickets, setTickets] = useState<Record<string, Ticket>>({});
 
   useEffect(() => {
-    getDisplay().then((d) => setRows(d.rows));
+    getWindows().then(setWindows).catch(() => {});
   }, []);
 
   useSSE("/api/events", (ev) => {
-    if (ev.type === "display.updated") setRows(ev.payload as DisplayRow[]);
+    if (ev.type === "init") {
+      setWindows(ev.payload.windows as WindowState[]);
+      setTickets(ev.payload.tickets as Record<string, Ticket>);
+    }
+    if (ev.type === "window.updated") {
+      const w = ev.payload as WindowState;
+      setWindows((prev) => prev.map((x) => (x.id === w.id ? w : x)));
+    }
+    if (ev.type === "ticket.created" || ev.type === "ticket.updated") {
+      const t = ev.payload as Ticket;
+      setTickets((m) => ({ ...m, [t.id]: t }));
+    }
   });
 
   return (
@@ -26,27 +39,22 @@ export default function Display() {
           Now Serving
         </h1>
         <div className="grid gap-6 md:grid-cols-3">
-          {rows.map((r) => (
-            <div
-              key={r.service}
-              className="rounded-3xl border border-border/60 bg-card/90 p-6 shadow-xl"
-            >
-              <div className="text-sm uppercase text-muted-foreground">
-                Service {r.service.slice(1)}
-              </div>
-              <div className="mt-3 text-2xl font-semibold text-green-600">
-                Now Serving: {r.nowServing.code ?? "—"}
-                {r.nowServing.code && (
-                  <span className="ml-2 text-base text-foreground">
-                    at Window {r.nowServing.windowId}
-                  </span>
-                )}
-              </div>
-              <div className="mt-2 text-lg text-muted-foreground">
-                Next: {r.next ?? "—"}
-              </div>
-            </div>
-          ))}
+          {windows.map((w) => {
+            const code = w.currentTicketId ? tickets[w.currentTicketId]?.code : null;
+            return (
+              <Card key={w.id} className="rounded-3xl border border-border/60 bg-card/90 p-6 shadow-xl">
+                <div className="text-sm uppercase text-muted-foreground">
+                  {w.name}
+                </div>
+                <div className="mt-3 text-2xl font-semibold text-green-600">
+                  Now Serving: {code ?? "—"}
+                </div>
+                <div className="mt-2 text-sm text-muted-foreground">
+                  Status: {w.busy ? "Serving" : "Idle"}
+                </div>
+              </Card>
+            );
+          })}
         </div>
       </div>
     </div>
