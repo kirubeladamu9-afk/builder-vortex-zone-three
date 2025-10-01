@@ -311,23 +311,38 @@ export default function Reception() {
   const [notes, setNotes] = useState("");
   const [priorityCode, setPriorityCode] = useState("");
   const [generatedTicket, setGeneratedTicket] = useState<Ticket | null>(null);
+  const [lastSubmission, setLastSubmission] = useState<DraftDetails | null>(null);
 
   const selectedService = useMemo(() => {
     const value = generatedTicket?.service ?? service;
     return SERVICE_OPTIONS.find((option) => option.value === value) ?? SERVICE_OPTIONS[0];
   }, [generatedTicket?.service, service]);
 
-  const createTicket = useMutation({
+  const createTicket = useMutation<Ticket, Error, CreateTicketPayload>({
     mutationFn: createTicketRequest,
-    onSuccess: (ticket) => {
+    onSuccess: (ticket, variables) => {
       setGeneratedTicket(ticket);
+      const trimmedNotes = variables.notes?.trim() ?? "";
+      const combinedNotes = [
+        variables.priorityCode?.trim() ? `Priority: ${variables.priorityCode.trim()}` : null,
+        trimmedNotes ? trimmedNotes : null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+      setLastSubmission({
+        ownerName: variables.ownerName,
+        woreda: variables.woreda,
+        notes: combinedNotes,
+        priorityCode: variables.priorityCode ?? "",
+        service: variables.service,
+      });
       toast.success(`Ticket ${ticket.code} generated`);
       setOwnerName("");
       setWoreda("");
       setNotes("");
       setPriorityCode("");
     },
-    onError: (error: unknown) => {
+    onError: (error) => {
       const message = error instanceof Error ? error.message : "Unable to create ticket.";
       toast.error(message);
     },
@@ -348,13 +363,24 @@ export default function Reception() {
     });
   };
 
+  const previewNotes = useMemo(() => {
+    const trimmedNotes = notes.trim();
+    return [
+      priorityCode.trim() ? `Priority: ${priorityCode.trim()}` : null,
+      trimmedNotes ? trimmedNotes : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }, [notes, priorityCode]);
+
   const draft: DraftDetails = {
     ownerName,
     woreda,
-    notes,
+    notes: previewNotes,
     priorityCode,
     service,
   };
+  const previewDetails = generatedTicket && lastSubmission ? lastSubmission : draft;
 
   return (
     <div className="relative overflow-hidden">
@@ -468,6 +494,7 @@ export default function Reception() {
                         onSelect={(value) => {
                           setService(value);
                           setGeneratedTicket(null);
+                          setLastSubmission(null);
                         }}
                       />
                     ))}
@@ -496,7 +523,7 @@ export default function Reception() {
 
               <TicketPreview
                 ticket={generatedTicket}
-                details={draft}
+                details={previewDetails}
                 selectedService={selectedService}
                 isGenerating={createTicket.isPending}
               />
