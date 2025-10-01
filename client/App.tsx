@@ -11,6 +11,8 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Queue from "./pages/Queue";
 import Reception from "./pages/Reception";
+import Teller from "./pages/Teller";
+import Display from "./pages/Display";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +27,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/reception" element={<Reception />} />
             <Route path="/queue" element={<Queue />} />
+            <Route path="/teller" element={<Teller />} />
+            <Route path="/display" element={<Display />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
