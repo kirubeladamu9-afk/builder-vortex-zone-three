@@ -32,8 +32,13 @@ export async function initDb() {
     status text not null,
     window_id int,
     created_at timestamptz not null default now(),
-    notes text
+    notes text,
+    owner_name text,
+    woreda text
   );`);
+  // Backfill columns if table existed
+  await p.query(`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS owner_name text;`);
+  await p.query(`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS woreda text;`);
   await p.query(`CREATE TABLE IF NOT EXISTS service_counters (
     service text primary key,
     next_number int not null
