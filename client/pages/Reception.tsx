@@ -220,15 +220,9 @@ function TicketPreview({
         isActive = false;
       };
     }
-    const payload = {
-      code: ticket.code,
-      service: ticket.service,
-      ownerName: ticket.ownerName ?? details.ownerName,
-      woreda: ticket.woreda ?? details.woreda,
-      notes: ticket.notes ?? details.notes,
-      createdAt: ticket.createdAt,
-    };
-    QRCode.toDataURL(JSON.stringify(payload), { width: 240, margin: 1 })
+    const origin = window.location?.origin || "";
+    const statusUrl = `${origin}/tickets/${encodeURIComponent(ticket.code)}`;
+    QRCode.toDataURL(statusUrl, { width: 240, margin: 1 })
       .then((url) => {
         if (isActive) setQrDataUrl(url);
       })
@@ -254,9 +248,7 @@ function TicketPreview({
         notes: details.notes,
       };
 
-  const trackingUrl = ticket
-    ? `https://qflowhq.com/tickets/${ticket.code}`
-    : null;
+  const trackingUrl = ticket ? `/tickets/${ticket.code}` : null;
   const noteLines = display.notes
     ? display.notes
         .split("\n")
