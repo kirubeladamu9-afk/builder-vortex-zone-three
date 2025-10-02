@@ -75,16 +75,7 @@ export default function Teller() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["windows"] }),
   });
 
-  const [serviceByWindow, setServiceByWindow] = useState<
-    Record<number, "S1" | "S2" | "S3">
-  >({});
-  useEffect(() => {
-    if (windowsQuery.data) {
-      const init: Record<number, "S1" | "S2" | "S3"> = {};
-      for (const w of windowsQuery.data) init[w.id] = init[w.id] || "S1";
-      setServiceByWindow((s) => ({ ...init, ...s }));
-    }
-  }, [windowsQuery.data]);
+  // FIFO mode active: no per-window service selection
 
   return (
     <div className="container py-10">
