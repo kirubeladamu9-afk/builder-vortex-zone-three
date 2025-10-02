@@ -49,7 +49,6 @@ export default function TicketStatus() {
       const t = ev.payload as Ticket;
       if (t.code === code) {
         setTicket(t);
-        // Refresh position info on relevant updates
         fetchStatus(code)
           .then((d) => {
             setPosition(d.positionInQueue);
@@ -57,6 +56,17 @@ export default function TicketStatus() {
           })
           .catch(() => {});
       }
+      return;
+    }
+    if (ev.type === "display.updated" || ev.type === "window.updated") {
+      // Queue moved; refresh status for this code so position/ETA stay live
+      fetchStatus(code)
+        .then((d) => {
+          setTicket(d.ticket);
+          setPosition(d.positionInQueue);
+          setEstSeconds(d.estimatedWaitSeconds ?? null);
+        })
+        .catch(() => {});
     }
   });
 
