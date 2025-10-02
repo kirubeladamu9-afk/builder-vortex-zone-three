@@ -322,6 +322,28 @@ export async function seedDemoDb() {
   for (let i = 0; i < 5; i++) await createTicketDb("S3");
 }
 
+export async function getTicketByCodeDb(code: string): Promise<{
+  ticket: Ticket | null;
+  positionInQueue: number | null;
+}> {
+  const p = getPool();
+  const tRes = await p.query(
+    `SELECT id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes, owner_name, woreda
+     FROM tickets WHERE code=$1 LIMIT 1`,
+    [code],
+  );
+  if (!tRes.rowCount) return { ticket: null, positionInQueue: null };
+  const t = rowToTicket(tRes.rows[0]);
+  if (t.status !== "waiting") return { ticket: t, positionInQueue: null };
+  const posRes = await p.query(
+    `SELECT COUNT(*) AS ahead FROM tickets
+     WHERE service=$1 AND status='waiting' AND (created_at < (SELECT created_at FROM tickets WHERE id=$2) OR (created_at = (SELECT created_at FROM tickets WHERE id=$2) AND number < (SELECT number FROM tickets WHERE id=$2)))`,
+    [t.service, t.id],
+  );
+  const ahead = Number(posRes.rows[0].ahead || 0);
+  return { ticket: t, positionInQueue: ahead + 1 };
+}
+
 function rowToTicket(r: any): Ticket {
   return {
     id: r.id,
