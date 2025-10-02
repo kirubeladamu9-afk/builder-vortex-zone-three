@@ -41,6 +41,7 @@ export function createServer() {
   app.post("/api/windows/:id/skip", skip);
   app.post("/api/windows/:id/transfer", transfer);
   app.get("/api/display", displayData);
+  app.get("/api/tickets/:code", getTicketStatus);
   app.post("/api/seed", seedDemo);
 
   return app;
