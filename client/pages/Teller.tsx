@@ -165,10 +165,8 @@ export default function Teller() {
                 </Button>
                 <Button
                   variant="secondary"
-                  onClick={() => {
-                    const reason = window.prompt("Reason for recall? (optional)") || undefined;
-                    recall.mutate({ id: w.id, reason });
-                  }}
+                  onClick={() => recall.mutate({ id: w.id })}
+                  disabled={recall.isPending || !w.currentTicketId}
                 >
                   Recall
                 </Button>
