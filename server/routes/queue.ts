@@ -276,9 +276,11 @@ export const callNext: RequestHandler = async (req, res) => {
 
 export const recall: RequestHandler = async (req, res) => {
   const windowId = Number(req.params.id);
+  const { reason } = (req.body || {}) as { reason?: string };
   if (isDbEnabled) {
-    const { ticket } = await recallDb(windowId);
+    const { ticket } = await recallDb(windowId, reason);
     if (!ticket) return res.status(400).json({ error: "No active ticket" });
+    sendSSE({ type: "ticket.updated", payload: ticket });
     const rows = await displayRowsDb();
     sendSSE({ type: "display.updated", payload: rows });
     return res.json({ ok: true, ticket, display: rows });
@@ -288,6 +290,7 @@ export const recall: RequestHandler = async (req, res) => {
   const t = win.currentTicketId ? tickets[win.currentTicketId] : null;
   if (!t) return res.status(400).json({ error: "No active ticket" });
   // Emit display update (same state, just re-announce)
+  sendSSE({ type: "ticket.updated", payload: t });
   const rows = updateDisplay();
   res.json({ ok: true, ticket: t, display: rows });
 };
