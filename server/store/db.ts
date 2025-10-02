@@ -45,6 +45,8 @@ export async function initDb() {
     status text not null,
     window_id int,
     created_at timestamptz not null default now(),
+    started_at timestamptz,
+    completed_at timestamptz,
     notes text,
     owner_name text,
     woreda text
@@ -54,6 +56,8 @@ export async function initDb() {
     `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS owner_name text;`,
   );
   await p.query(`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS woreda text;`);
+  await p.query(`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS started_at timestamptz;`);
+  await p.query(`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS completed_at timestamptz;`);
   await p.query(`CREATE TABLE IF NOT EXISTS service_counters (
     service text primary key,
     next_number int not null
@@ -165,7 +169,7 @@ export async function callNextDb(windowId: number, service: ServiceType) {
     }
     const ticketId = nextRes.rows[0].id;
     const tRes = await client.query(
-      `UPDATE tickets SET status='serving', window_id=$1 WHERE id=$2 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes;`,
+      `UPDATE tickets SET status='serving', window_id=$1, started_at=COALESCE(started_at, now()) WHERE id=$2 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes, owner_name, woreda;`,
       [windowId, ticketId],
     );
     await client.query(
@@ -205,7 +209,7 @@ export async function completeDb(windowId: number) {
     const w = await getWindow(client, windowId);
     if (!w.currentTicketId) throw new Error("No active ticket");
     const tRes = await client.query(
-      `UPDATE tickets SET status='done' WHERE id=$1 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes;`,
+      `UPDATE tickets SET status='done', completed_at=now() WHERE id=$1 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes, owner_name, woreda;`,
       [w.currentTicketId],
     );
     await client.query(
@@ -233,7 +237,7 @@ export async function skipDb(windowId: number) {
     const w = await getWindow(client, windowId);
     if (!w.currentTicketId) throw new Error("No active ticket");
     const tRes = await client.query(
-      `UPDATE tickets SET status='skipped' WHERE id=$1 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes;`,
+      `UPDATE tickets SET status='skipped' WHERE id=$1 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes, owner_name, woreda;`,
       [w.currentTicketId],
     );
     await client.query(
@@ -271,7 +275,7 @@ export async function transferDb(windowId: number, targetWindowId: number) {
       [source.currentTicketId, targetWindowId],
     );
     const tRes = await client.query(
-      `UPDATE tickets SET status='transferred', window_id=$1 WHERE id=$2 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes;`,
+      `UPDATE tickets SET status='transferred', window_id=$1 WHERE id=$2 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes, owner_name, woreda;`,
       [targetWindowId, source.currentTicketId],
     );
     await client.query("COMMIT");
@@ -325,6 +329,7 @@ export async function seedDemoDb() {
 export async function getTicketByCodeDb(code: string): Promise<{
   ticket: Ticket | null;
   positionInQueue: number | null;
+  estimatedWaitSeconds: number | null;
 }> {
   const p = getPool();
   const tRes = await p.query(
@@ -332,16 +337,23 @@ export async function getTicketByCodeDb(code: string): Promise<{
      FROM tickets WHERE code=$1 LIMIT 1`,
     [code],
   );
-  if (!tRes.rowCount) return { ticket: null, positionInQueue: null };
+  if (!tRes.rowCount) return { ticket: null, positionInQueue: null, estimatedWaitSeconds: null };
   const t = rowToTicket(tRes.rows[0]);
-  if (t.status !== "waiting") return { ticket: t, positionInQueue: null };
+  if (t.status !== "waiting") return { ticket: t, positionInQueue: null, estimatedWaitSeconds: null };
   const posRes = await p.query(
     `SELECT COUNT(*) AS ahead FROM tickets
      WHERE service=$1 AND status='waiting' AND (created_at < (SELECT created_at FROM tickets WHERE id=$2) OR (created_at = (SELECT created_at FROM tickets WHERE id=$2) AND number < (SELECT number FROM tickets WHERE id=$2)))`,
     [t.service, t.id],
   );
   const ahead = Number(posRes.rows[0].ahead || 0);
-  return { ticket: t, positionInQueue: ahead + 1 };
+  const position = ahead + 1;
+  const avgRes = await p.query(
+    `SELECT AVG(EXTRACT(EPOCH FROM (completed_at - started_at))) AS avg_seconds
+     FROM tickets WHERE service=$1 AND completed_at IS NOT NULL AND started_at IS NOT NULL`,
+    [t.service],
+  );
+  const avg = Math.max(60, Math.round(Number(avgRes.rows[0]?.avg_seconds || 300)));
+  return { ticket: t, positionInQueue: position, estimatedWaitSeconds: position * avg };
 }
 
 function rowToTicket(r: any): Ticket {

@@ -66,6 +66,7 @@ export interface DisplayResponse {
 export interface TicketStatusResponse {
   ticket: Ticket | null;
   positionInQueue: number | null; // 1-based position if waiting, else null
+  estimatedWaitSeconds: number | null; // null if not applicable or unknown
 }
 
 export function formatTicketCode(service: ServiceType, number: number) {
