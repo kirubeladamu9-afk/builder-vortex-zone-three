@@ -184,12 +184,13 @@ export const sseHandler: RequestHandler = async (req, res) => {
         windows: windowsDb,
         services: servicesState,
         tickets: ticketsMap,
+        display: await displayRowsDb(),
       };
     } catch (e) {
-      payload = snapshot();
+      payload = { ...snapshot(), display: updateDisplay() };
     }
   } else {
-    payload = snapshot();
+    payload = { ...snapshot(), display: updateDisplay() };
   }
 
   const init: QueueEvent = { type: "init", payload };
