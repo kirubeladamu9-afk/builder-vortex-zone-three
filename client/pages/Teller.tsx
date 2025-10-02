@@ -62,8 +62,12 @@ export default function Teller() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["windows"] }),
   });
   const skip = useMutation({
-    mutationFn: async (id: number) =>
-      api(`/api/windows/${id}/skip`, { method: "POST" }),
+    mutationFn: async (p: { id: number; reason?: string }) =>
+      api(`/api/windows/${p.id}/skip`, {
+        method: "POST",
+        body: JSON.stringify({ reason: p.reason }),
+        headers: { "Content-Type": "application/json" },
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["windows"] }),
   });
   const transfer = useMutation({
@@ -153,7 +157,10 @@ export default function Teller() {
                 </Button>
                 <Button
                   variant="destructive"
-                  onClick={() => skip.mutate(w.id)}
+                  onClick={() => {
+                    const reason = window.prompt("Reason for skipping? (optional)") || undefined;
+                    skip.mutate({ id: w.id, reason });
+                  }}
                   disabled={skip.isPending}
                 >
                   Skip
