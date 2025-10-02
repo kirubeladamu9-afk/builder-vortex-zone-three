@@ -15,6 +15,7 @@ export default function TicketStatus() {
   const { code = "" } = useParams<{ code: string }>();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [position, setPosition] = useState<number | null>(null);
+  const [estSeconds, setEstSeconds] = useState<number | null>(null);
 
   useEffect(() => {
     let stop = false;
