@@ -21,7 +21,12 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useSSE } from "@/hooks/use-sse";
 import { apiFetch, apiUrl } from "@/lib/api";
-import type { DisplayResponse, DisplayRow, Ticket, WindowState } from "@shared/api";
+import type {
+  DisplayResponse,
+  DisplayRow,
+  Ticket,
+  WindowState,
+} from "@shared/api";
 
 const STATUS_STEPS = [
   {
@@ -103,7 +108,8 @@ export default function Queue() {
     if (ev.type === "init") {
       const payload: any = ev.payload;
       if (payload.windows) setWindows(payload.windows as WindowState[]);
-      if (payload.tickets) setTickets(payload.tickets as Record<string, Ticket>);
+      if (payload.tickets)
+        setTickets(payload.tickets as Record<string, Ticket>);
       if (payload.display) setRows(payload.display as DisplayRow[]);
     }
     if (ev.type === "window.updated") {
@@ -174,11 +180,19 @@ export default function Queue() {
               {/* Aggregated current/next list */}
               {(() => {
                 const serving = windows
-                  .map((w) => (w.currentTicketId ? { w, t: tickets[w.currentTicketId] } : null))
-                  .filter((x): x is { w: WindowState; t: Ticket } => !!x && !!x.t);
+                  .map((w) =>
+                    w.currentTicketId
+                      ? { w, t: tickets[w.currentTicketId] }
+                      : null,
+                  )
+                  .filter(
+                    (x): x is { w: WindowState; t: Ticket } => !!x && !!x.t,
+                  );
                 const waiting = Object.values(tickets)
                   .filter((t) => t.status === "waiting")
-                  .sort((a, b) => a.createdAt - b.createdAt || a.number - b.number);
+                  .sort(
+                    (a, b) => a.createdAt - b.createdAt || a.number - b.number,
+                  );
                 const next = waiting[0];
                 const nextAfter = waiting[1];
                 const rest = waiting.slice(2);
@@ -186,13 +200,22 @@ export default function Queue() {
                 return (
                   <div className="space-y-3">
                     <div className="rounded-2xl border border-green-500/40 bg-green-500/10 p-4">
-                      <p className="text-xs uppercase tracking-widest text-green-600">Now Serving</p>
+                      <p className="text-xs uppercase tracking-widest text-green-600">
+                        Now Serving
+                      </p>
                       {serving.length ? (
                         <div className="mt-2 grid gap-2 sm:grid-cols-2">
                           {serving.map(({ w, t }) => (
-                            <div key={w.id} className="flex items-center justify-between rounded-xl bg-card/80 p-3">
-                              <span className="font-display text-2xl font-semibold">{t.code}</span>
-                              <span className="text-sm text-muted-foreground">{w.name}</span>
+                            <div
+                              key={w.id}
+                              className="flex items-center justify-between rounded-xl bg-card/80 p-3"
+                            >
+                              <span className="font-display text-2xl font-semibold">
+                                {t.code}
+                              </span>
+                              <span className="text-sm text-muted-foreground">
+                                {w.name}
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -203,21 +226,36 @@ export default function Queue() {
 
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4">
-                        <p className="text-xs uppercase tracking-widest text-amber-600">Next</p>
-                        <p className="mt-1 font-display text-2xl font-semibold">{next?.code ?? "—"}</p>
+                        <p className="text-xs uppercase tracking-widest text-amber-600">
+                          Next
+                        </p>
+                        <p className="mt-1 font-display text-2xl font-semibold">
+                          {next?.code ?? "—"}
+                        </p>
                       </div>
                       <div className="rounded-2xl border border-sky-500/40 bg-sky-500/10 p-4">
-                        <p className="text-xs uppercase tracking-widest text-sky-600">Next After</p>
-                        <p className="mt-1 font-display text-2xl font-semibold">{nextAfter?.code ?? "—"}</p>
+                        <p className="text-xs uppercase tracking-widest text-sky-600">
+                          Next After
+                        </p>
+                        <p className="mt-1 font-display text-2xl font-semibold">
+                          {nextAfter?.code ?? "—"}
+                        </p>
                       </div>
                     </div>
 
                     {rest.length > 0 && (
                       <div className="rounded-2xl border border-border/60 bg-background/70 p-4">
-                        <p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">Waiting</p>
+                        <p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">
+                          Waiting
+                        </p>
                         <ol className="grid gap-2 sm:grid-cols-2">
                           {rest.map((t) => (
-                            <li key={t.id} className="rounded-xl bg-card/80 p-3 font-medium">{t.code}</li>
+                            <li
+                              key={t.id}
+                              className="rounded-xl bg-card/80 p-3 font-medium"
+                            >
+                              {t.code}
+                            </li>
                           ))}
                         </ol>
                       </div>

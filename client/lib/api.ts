@@ -1,10 +1,13 @@
 export function getApiBase(): string {
   // Prefer explicit env at build-time
-  const envBase = (import.meta as any).env?.VITE_API_BASE_URL as string | undefined;
+  const envBase = (import.meta as any).env?.VITE_API_BASE_URL as
+    | string
+    | undefined;
   if (envBase) return envBase.replace(/\/$/, "");
   // Allow runtime override (e.g., window.__API_BASE__ = "https://api.example.com")
   // @ts-ignore
-  const runtime = typeof window !== "undefined" ? (window as any).__API_BASE__ : undefined;
+  const runtime =
+    typeof window !== "undefined" ? (window as any).__API_BASE__ : undefined;
   if (runtime) return String(runtime).replace(/\/$/, "");
   // Default to same-origin
   return "";
@@ -16,7 +19,10 @@ export function apiUrl(path: string): string {
   return `${base}${path}`;
 }
 
-export async function apiFetch<T>(path: string, opts?: RequestInit): Promise<T> {
+export async function apiFetch<T>(
+  path: string,
+  opts?: RequestInit,
+): Promise<T> {
   const res = await fetch(apiUrl(path), {
     headers: { "Content-Type": "application/json", ...(opts?.headers || {}) },
     ...opts,

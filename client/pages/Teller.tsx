@@ -7,7 +7,6 @@ import type { Ticket, WindowState } from "@shared/api";
 import { toast } from "sonner";
 import { apiFetch, apiUrl } from "@/lib/api";
 
-
 function speak(text: string) {
   try {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
@@ -52,13 +51,18 @@ export default function Teller() {
 
   const callNext = useMutation({
     mutationFn: async (p: { id: number }) =>
-      apiFetch<{ window: WindowState; ticket: Ticket }>(`/api/windows/${p.id}/call-next`, {
-        method: "POST",
-      }),
+      apiFetch<{ window: WindowState; ticket: Ticket }>(
+        `/api/windows/${p.id}/call-next`,
+        {
+          method: "POST",
+        },
+      ),
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: ["windows"] });
       if (data?.ticket && data?.window) {
-        speak(`Ticket ${data.ticket.code}, please proceed to ${data.window.name}`);
+        speak(
+          `Ticket ${data.ticket.code}, please proceed to ${data.window.name}`,
+        );
       }
     },
   });
@@ -70,8 +74,11 @@ export default function Teller() {
         body: JSON.stringify({ reason: p.reason }),
       }),
     onSuccess: (data, vars) => {
-      const win = qc.getQueryData<WindowState[]>(["windows"])?.find((w) => w.id === vars.id);
-      if (data?.ticket && win) speak(`Ticket ${data.ticket.code}, please proceed to ${win.name}`);
+      const win = qc
+        .getQueryData<WindowState[]>(["windows"])
+        ?.find((w) => w.id === vars.id);
+      if (data?.ticket && win)
+        speak(`Ticket ${data.ticket.code}, please proceed to ${win.name}`);
       toast.message("Recalled current ticket");
     },
   });
@@ -155,9 +162,7 @@ export default function Teller() {
               </div>
               <div className="flex items-center gap-2">
                 <Button
-                  onClick={() =>
-                    callNext.mutate({ id: w.id })
-                  }
+                  onClick={() => callNext.mutate({ id: w.id })}
                   disabled={callNext.isPending}
                 >
                   Call Next
@@ -181,7 +186,9 @@ export default function Teller() {
                 <Button
                   variant="destructive"
                   onClick={() => {
-                    const reason = window.prompt("Reason for skipping? (optional)") || undefined;
+                    const reason =
+                      window.prompt("Reason for skipping? (optional)") ||
+                      undefined;
                     skip.mutate({ id: w.id, reason });
                   }}
                   disabled={skip.isPending}
