@@ -13,6 +13,7 @@ import Queue from "./pages/Queue";
 import Reception from "./pages/Reception";
 import Teller from "./pages/Teller";
 import Display from "./pages/Display";
+import TicketStatus from "./pages/TicketStatus";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/queue" element={<Queue />} />
             <Route path="/teller" element={<Teller />} />
             <Route path="/display" element={<Display />} />
+            <Route path="/tickets/:code" element={<TicketStatus />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
