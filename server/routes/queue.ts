@@ -19,6 +19,7 @@ import {
   listWindowsDb,
   createTicketDb,
   callNextDb,
+  callNextAnyDb,
   recallDb,
   completeDb,
   skipDb,
@@ -227,10 +228,10 @@ export const listWindows: RequestHandler = async (_req, res) => {
 
 export const callNext: RequestHandler = async (req, res) => {
   const windowId = Number(req.params.id);
-  const { service = "S1" } = (req.body || {}) as CallNextRequest;
+  // Ignore service; enforce global FIFO across all services
 
   if (isDbEnabled) {
-    const result = await callNextDb(windowId, service as ServiceType);
+    const result = await callNextAnyDb(windowId);
     if (!result.ticket)
       return res.status(200).json({ message: "No tickets waiting" });
     sendSSE({ type: "window.updated", payload: result.window });
@@ -247,8 +248,19 @@ export const callNext: RequestHandler = async (req, res) => {
   const win = windows.find((w) => w.id === windowId);
   if (!win) return res.status(404).json({ error: "Window not found" });
 
-  const next = pickNext(service as ServiceType);
-  if (!next) return res.status(200).json({ message: "No tickets waiting" });
+  // In-memory FIFO across all services by earliest createdAt among queue heads
+  const headCandidates = SERVICES.map((s) => {
+    const id = queues[s].waitingIds[0];
+    const t = id ? tickets[id] : null;
+    return t ? { t, service: s } : null;
+  }).filter(Boolean) as Array<{ t: Ticket; service: ServiceType }>;
+  if (!headCandidates.length)
+    return res.status(200).json({ message: "No tickets waiting" });
+  headCandidates.sort((a, b) => a.t.createdAt - b.t.createdAt);
+  const chosen = headCandidates[0];
+  // Remove from its queue
+  queues[chosen.service].waitingIds.shift();
+  const next = chosen.t;
 
   next.status = "serving";
   next.windowId = win.id;
