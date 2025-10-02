@@ -115,6 +115,28 @@ export default function Teller() {
                     ? (tickets[w.currentTicketId]?.code ?? "")
                     : "—"}
                 </p>
+                {w.currentTicketId && (
+                  <div className="mt-3 grid gap-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Owner</span>
+                      <span className="font-medium">
+                        {tickets[w.currentTicketId]?.ownerName ?? "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Woreda</span>
+                      <span className="font-medium">
+                        {tickets[w.currentTicketId]?.woreda ?? "—"}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase text-muted-foreground">Notes</p>
+                      <p className="whitespace-pre-wrap">
+                        {tickets[w.currentTicketId]?.notes || "—"}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <select
