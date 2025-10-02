@@ -30,24 +30,11 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { useSSE } from "@/hooks/use-sse";
+import type { DisplayRow, WindowState } from "@shared/api";
 
-const HERO_STATS = [
-  {
-    label: "Average wait time",
-    value: "−37%",
-    caption: "after 4 weeks with smart triage",
-  },
-  {
-    label: "Tickets processed",
-    value: "480+",
-    caption: "per day across 6 windows",
-  },
-  {
-    label: "Satisfaction score",
-    value: "4.8/5",
-    caption: "based on customer exit surveys",
-  },
-];
+// Live system stats are computed from SSE init + updates
 
 interface PhaseHighlight {
   title: string;
@@ -344,6 +331,32 @@ const PhaseCard = ({
 );
 
 export default function Index() {
+  const [windows, setWindows] = useState<WindowState[]>([]);
+  const [waitingByService, setWaitingByService] = useState<Record<string, number>>({ S1: 0, S2: 0, S3: 0 });
+  const [sseReady, setSseReady] = useState(false);
+
+  useSSE("/api/events", (ev) => {
+    if (ev.type === "init") {
+      setSseReady(true);
+      setWindows(ev.payload.windows as WindowState[]);
+      const services = ev.payload.services as Record<string, { nextNumber: number; waitingIds: string[] }>;
+      if (services) {
+        setWaitingByService({
+          S1: services.S1?.waitingIds?.length || 0,
+          S2: services.S2?.waitingIds?.length || 0,
+          S3: services.S3?.waitingIds?.length || 0,
+        });
+      }
+    }
+    if (ev.type === "window.updated") {
+      const w = ev.payload as WindowState;
+      setWindows((prev) => (prev.length ? prev.map((x) => (x.id === w.id ? w : x)) : [w]));
+    }
+  });
+
+  const servingCount = windows.filter((w) => Boolean(w.currentTicketId)).length;
+  const waitingTotal = waitingByService.S1 + waitingByService.S2 + waitingByService.S3;
+
   return (
     <div className="relative overflow-hidden">
       <section className="relative overflow-hidden">
@@ -385,22 +398,21 @@ export default function Index() {
               </Button>
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
-              {HERO_STATS.map((stat) => (
-                <div
-                  key={stat.label}
-                  className="rounded-2xl border border-border/60 bg-background/80 p-4 shadow-sm"
-                >
-                  <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                    {stat.label}
-                  </p>
-                  <p className="mt-2 font-display text-3xl font-semibold text-foreground">
-                    {stat.value}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {stat.caption}
-                  </p>
-                </div>
-              ))}
+              <div className="rounded-2xl border border-border/60 bg-background/80 p-4 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Waiting tickets</p>
+                <p className="mt-2 font-display text-3xl font-semibold text-foreground">{waitingTotal}</p>
+                <p className="mt-1 text-xs text-muted-foreground">DB-backed (S1/S2/S3)</p>
+              </div>
+              <div className="rounded-2xl border border-border/60 bg-background/80 p-4 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Active windows</p>
+                <p className="mt-2 font-display text-3xl font-semibold text-foreground">{servingCount}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Now serving via SSE</p>
+              </div>
+              <div className="rounded-2xl border border-border/60 bg-background/80 p-4 shadow-sm">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">Database</p>
+                <p className="mt-2 font-display text-3xl font-semibold text-foreground">{sseReady ? "Connected" : "Connecting"}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Postgres + real-time events</p>
+              </div>
             </div>
           </div>
           <div className="relative">
