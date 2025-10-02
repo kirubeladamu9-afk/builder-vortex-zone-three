@@ -406,6 +406,7 @@ export const getTicketStatus: RequestHandler = async (req, res) => {
     const payload: TicketStatusResponse = {
       ticket: result.ticket,
       positionInQueue: result.positionInQueue,
+      estimatedWaitSeconds: result.estimatedWaitSeconds,
     };
     return res.json(payload);
   }
@@ -417,7 +418,12 @@ export const getTicketStatus: RequestHandler = async (req, res) => {
     const idx = ids.findIndex((id) => id === t.id);
     position = idx >= 0 ? idx + 1 : null;
   }
-  const payload: TicketStatusResponse = { ticket: t, positionInQueue: position };
+  const avg = 300; // 5 min default
+  const payload: TicketStatusResponse = {
+    ticket: t,
+    positionInQueue: position,
+    estimatedWaitSeconds: position ? position * avg : null,
+  };
   res.json(payload);
 };
 
