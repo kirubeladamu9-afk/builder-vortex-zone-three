@@ -5,29 +5,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSSE } from "@/hooks/use-sse";
 import type { Ticket, WindowState } from "@shared/api";
 import { toast } from "sonner";
+import { apiFetch, apiUrl } from "@/lib/api";
 
-async function api<T>(path: string, opts?: RequestInit) {
-  const res = await fetch(path, {
-    headers: { "Content-Type": "application/json" },
-    ...opts,
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return (await res.json()) as T;
-}
 
 export default function Teller() {
   const qc = useQueryClient();
 
   const windowsQuery = useQuery({
     queryKey: ["windows"],
-    queryFn: async () => api<WindowState[]>("/api/windows"),
+    queryFn: async () => apiFetch<WindowState[]>("/api/windows"),
     refetchOnWindowFocus: false,
     refetchInterval: 3000,
   });
 
   const [tickets, setTickets] = useState<Record<string, Ticket>>({});
 
-  useSSE("/api/events", (ev) => {
+  useSSE(apiUrl("/api/events"), (ev) => {
     if (ev.type === "init") {
       setTickets(ev.payload.tickets);
       qc.setQueryData(["windows"], ev.payload.windows as WindowState[]);
@@ -46,7 +39,7 @@ export default function Teller() {
 
   const callNext = useMutation({
     mutationFn: async (p: { id: number }) =>
-      api(`/api/windows/${p.id}/call-next`, {
+      apiFetch(`/api/windows/${p.id}/call-next`, {
         method: "POST",
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["windows"] }),
@@ -54,7 +47,7 @@ export default function Teller() {
 
   const recall = useMutation({
     mutationFn: async (p: { id: number; reason?: string }) =>
-      api(`/api/windows/${p.id}/recall`, {
+      apiFetch(`/api/windows/${p.id}/recall`, {
         method: "POST",
         body: JSON.stringify({ reason: p.reason }),
         headers: { "Content-Type": "application/json" },
@@ -78,12 +71,12 @@ export default function Teller() {
   });
   const complete = useMutation({
     mutationFn: async (id: number) =>
-      api(`/api/windows/${id}/complete`, { method: "POST" }),
+      apiFetch(`/api/windows/${id}/complete`, { method: "POST" }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["windows"] }),
   });
   const skip = useMutation({
     mutationFn: async (p: { id: number; reason?: string }) =>
-      api(`/api/windows/${p.id}/skip`, {
+      apiFetch(`/api/windows/${p.id}/skip`, {
         method: "POST",
         body: JSON.stringify({ reason: p.reason }),
         headers: { "Content-Type": "application/json" },
@@ -202,7 +195,7 @@ export default function Teller() {
         <Button
           variant="outline"
           onClick={async () => {
-            await api("/api/seed", { method: "POST" });
+            await apiFetch("/api/seed", { method: "POST" });
             toast.success("Seeded sample tickets");
           }}
         >
@@ -222,7 +215,7 @@ function TransferControl({
 }) {
   const { data } = useQuery({
     queryKey: ["windows"],
-    queryFn: async () => api<WindowState[]>("/api/windows"),
+    queryFn: async () => apiFetch<WindowState[]>("/api/windows"),
   });
   const targets = useMemo(
     () => (data || []).filter((w) => w.id !== windowId),
