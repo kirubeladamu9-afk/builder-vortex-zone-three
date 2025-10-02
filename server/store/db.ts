@@ -49,7 +49,10 @@ export async function initDb() {
     completed_at timestamptz,
     notes text,
     owner_name text,
-    woreda text
+    woreda text,
+    remark text,
+    skipped_at timestamptz,
+    skipped_by_window int
   );`);
   // Backfill columns if table existed
   await p.query(
@@ -61,6 +64,13 @@ export async function initDb() {
   );
   await p.query(
     `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS completed_at timestamptz;`,
+  );
+  await p.query(`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS remark text;`);
+  await p.query(
+    `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS skipped_at timestamptz;`,
+  );
+  await p.query(
+    `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS skipped_by_window int;`,
   );
   await p.query(`CREATE TABLE IF NOT EXISTS service_counters (
     service text primary key,
@@ -159,6 +169,7 @@ export async function createTicketDb(
 }
 
 export async function callNextDb(windowId: number, service: ServiceType) {
+  // Kept for backward-compat: delegate to FIFO variant but constrain by service
   const p = getPool();
   const client = await p.connect();
   try {
@@ -166,6 +177,39 @@ export async function callNextDb(windowId: number, service: ServiceType) {
     const nextRes = await client.query(
       `SELECT id FROM tickets WHERE service=$1 AND status='waiting' ORDER BY created_at, number LIMIT 1 FOR UPDATE SKIP LOCKED;`,
       [service],
+    );
+    if (!nextRes.rowCount) {
+      await client.query("COMMIT");
+      return { window: await getWindow(client, windowId), ticket: null as any };
+    }
+    const ticketId = nextRes.rows[0].id;
+    const tRes = await client.query(
+      `UPDATE tickets SET status='serving', window_id=$1, started_at=COALESCE(started_at, now()) WHERE id=$2 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes, owner_name, woreda;`,
+      [windowId, ticketId],
+    );
+    await client.query(
+      `UPDATE windows SET current_ticket_id=$1, busy=true, updated_at=now() WHERE id=$2`,
+      [ticketId, windowId],
+    );
+    await client.query("COMMIT");
+    const ticket = rowToTicket(tRes.rows[0]);
+    const window = await getWindow(p, windowId);
+    return { window, ticket };
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
+export async function callNextAnyDb(windowId: number) {
+  const p = getPool();
+  const client = await p.connect();
+  try {
+    await client.query("BEGIN");
+    const nextRes = await client.query(
+      `SELECT id FROM tickets WHERE status='waiting' ORDER BY created_at, number LIMIT 1 FOR UPDATE SKIP LOCKED;`,
     );
     if (!nextRes.rowCount) {
       await client.query("COMMIT");
@@ -240,9 +284,10 @@ export async function skipDb(windowId: number) {
     await client.query("BEGIN");
     const w = await getWindow(client, windowId);
     if (!w.currentTicketId) throw new Error("No active ticket");
+    const remark = `Skipped by window ${windowId} at ${new Date().toISOString()}`;
     const tRes = await client.query(
-      `UPDATE tickets SET status='skipped' WHERE id=$1 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes, owner_name, woreda;`,
-      [w.currentTicketId],
+      `UPDATE tickets SET status='skipped', skipped_at=now(), skipped_by_window=$2, remark=$3 WHERE id=$1 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes, owner_name, woreda;`,
+      [w.currentTicketId, windowId, remark],
     );
     await client.query(
       `UPDATE windows SET current_ticket_id=NULL, busy=false, updated_at=now() WHERE id=$1`,
