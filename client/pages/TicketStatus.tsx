@@ -25,6 +25,7 @@ export default function TicketStatus() {
         if (stop) return;
         setTicket(d.ticket);
         setPosition(d.positionInQueue);
+        setEstSeconds(d.estimatedWaitSeconds ?? null);
       })
       .catch(() => {});
     const id = setInterval(() => {
@@ -33,6 +34,7 @@ export default function TicketStatus() {
           if (stop) return;
           setTicket(d.ticket);
           setPosition(d.positionInQueue);
+          setEstSeconds(d.estimatedWaitSeconds ?? null);
         })
         .catch(() => {});
     }, 5000);
@@ -49,7 +51,10 @@ export default function TicketStatus() {
         setTicket(t);
         // Refresh position info on relevant updates
         fetchStatus(code)
-          .then((d) => setPosition(d.positionInQueue))
+          .then((d) => {
+            setPosition(d.positionInQueue);
+            setEstSeconds(d.estimatedWaitSeconds ?? null);
+          })
           .catch(() => {});
       }
     }
@@ -91,13 +96,7 @@ export default function TicketStatus() {
             <div className="rounded-xl border border-border/60 bg-background/70 p-4">
               <p className="text-xs uppercase text-muted-foreground">Est. wait</p>
               <p className="mt-1 font-display text-xl">
-                {position == null ? "—" : (
-                  (() => {
-                    // fetched again in effect for accuracy
-                    const mins = Math.max(0, Math.round(((window as any).__lastEstSeconds ?? 0) / 60));
-                    return mins ? `${mins} min` : "—";
-                  })()
-                )}
+                {estSeconds == null ? "—" : `${Math.max(0, Math.round(estSeconds / 60))} min`}
               </p>
             </div>
             <div className="rounded-xl border border-border/60 bg-background/70 p-4">
