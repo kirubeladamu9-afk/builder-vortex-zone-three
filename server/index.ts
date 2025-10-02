@@ -13,6 +13,7 @@ import {
   skip,
   sseHandler,
   transfer,
+  getTicketStatus,
 } from "./routes/queue";
 
 export function createServer() {
