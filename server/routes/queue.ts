@@ -12,6 +12,7 @@ import {
   TransferRequest,
   WindowState,
   formatTicketCode,
+  TicketStatusResponse,
 } from "../../shared/api";
 import {
   isDbEnabled,
@@ -25,6 +26,7 @@ import {
   displayRowsDb,
   seedDemoDb,
   getPool,
+  getTicketByCodeDb,
 } from "../store/db";
 
 // In-memory store (can be swapped with DB adapter)
@@ -393,6 +395,30 @@ export const displayData: RequestHandler = async (_req, res) => {
   const rows = updateDisplay();
   const response: DisplayResponse = { rows };
   res.json(response);
+};
+
+export const getTicketStatus: RequestHandler = async (req, res) => {
+  const code = String(req.params.code || "");
+  if (!code) return res.status(400).json({ error: "Missing ticket code" });
+
+  if (isDbEnabled) {
+    const result = await getTicketByCodeDb(code);
+    const payload: TicketStatusResponse = {
+      ticket: result.ticket,
+      positionInQueue: result.positionInQueue,
+    };
+    return res.json(payload);
+  }
+  // In-memory mode
+  const t = Object.values(tickets).find((x) => x.code === code) || null;
+  let position: number | null = null;
+  if (t && t.status === "waiting") {
+    const ids = queues[t.service].waitingIds;
+    const idx = ids.findIndex((id) => id === t.id);
+    position = idx >= 0 ? idx + 1 : null;
+  }
+  const payload: TicketStatusResponse = { ticket: t, positionInQueue: position };
+  res.json(payload);
 };
 
 // Demo seeding for quicker preview
