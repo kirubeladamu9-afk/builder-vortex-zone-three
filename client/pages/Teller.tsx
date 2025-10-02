@@ -53,8 +53,28 @@ export default function Teller() {
   });
 
   const recall = useMutation({
-    mutationFn: async (id: number) =>
-      api(`/api/windows/${id}/recall`, { method: "POST" }),
+    mutationFn: async (p: { id: number; reason?: string }) =>
+      api(`/api/windows/${p.id}/recall`, {
+        method: "POST",
+        body: JSON.stringify({ reason: p.reason }),
+        headers: { "Content-Type": "application/json" },
+      }),
+    onSuccess: () => {
+      try {
+        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "sine";
+        o.frequency.value = 880;
+        o.connect(g);
+        g.connect(ctx.destination);
+        g.gain.setValueAtTime(0.0001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.01);
+        o.start();
+        o.stop(ctx.currentTime + 0.25);
+      } catch {}
+      toast.message("Recalled current ticket");
+    },
   });
   const complete = useMutation({
     mutationFn: async (id: number) =>
@@ -143,7 +163,13 @@ export default function Teller() {
                 >
                   Call Next
                 </Button>
-                <Button variant="secondary" onClick={() => recall.mutate(w.id)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    const reason = window.prompt("Reason for recall? (optional)") || undefined;
+                    recall.mutate({ id: w.id, reason });
+                  }}
+                >
                   Recall
                 </Button>
               </div>
