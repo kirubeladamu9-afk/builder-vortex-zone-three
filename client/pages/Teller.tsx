@@ -45,10 +45,9 @@ export default function Teller() {
   });
 
   const callNext = useMutation({
-    mutationFn: async (p: { id: number; service?: "S1" | "S2" | "S3" }) =>
+    mutationFn: async (p: { id: number }) =>
       api(`/api/windows/${p.id}/call-next`, {
         method: "POST",
-        body: JSON.stringify({ service: p.service }),
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["windows"] }),
   });
@@ -142,7 +141,7 @@ export default function Teller() {
               </div>
               <div className="flex items-center gap-2">
                 <select
-                  className="h-10 rounded-md border border-border bg-background px-2 text-sm"
+                  className="h-10 rounded-md border border-border bg-background px-2 text-sm opacity-60"
                   value={serviceByWindow[w.id] || "S1"}
                   onChange={(e) =>
                     setServiceByWindow((s) => ({
@@ -150,6 +149,8 @@ export default function Teller() {
                       [w.id]: e.target.value as any,
                     }))
                   }
+                  disabled
+                  title="First-in-first-out mode enabled — service selection ignored"
                 >
                   <option value="S1">Service 1</option>
                   <option value="S2">Service 2</option>
@@ -159,7 +160,6 @@ export default function Teller() {
                   onClick={() =>
                     callNext.mutate({
                       id: w.id,
-                      service: serviceByWindow[w.id],
                     })
                   }
                   disabled={callNext.isPending}
