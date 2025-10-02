@@ -82,10 +82,22 @@ export default function TicketStatus() {
               <p className="mt-1 font-display text-xl">{ticket?.windowId ? `Window ${ticket.windowId}` : "—"}</p>
             </div>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-xl border border-border/60 bg-background/70 p-4">
               <p className="text-xs uppercase text-muted-foreground">Position</p>
               <p className="mt-1 font-display text-xl">{position ?? "—"}</p>
+            </div>
+            <div className="rounded-xl border border-border/60 bg-background/70 p-4">
+              <p className="text-xs uppercase text-muted-foreground">Est. wait</p>
+              <p className="mt-1 font-display text-xl">
+                {position == null ? "—" : (
+                  (() => {
+                    // fetched again in effect for accuracy
+                    const mins = Math.max(0, Math.round(((window as any).__lastEstSeconds ?? 0) / 60));
+                    return mins ? `${mins} min` : "—";
+                  })()
+                )}
+              </p>
             </div>
             <div className="rounded-xl border border-border/60 bg-background/70 p-4">
               <p className="text-xs uppercase text-muted-foreground">Created</p>
