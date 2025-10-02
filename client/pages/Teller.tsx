@@ -131,27 +131,9 @@ export default function Teller() {
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <select
-                  className="h-10 rounded-md border border-border bg-background px-2 text-sm opacity-60"
-                  value={serviceByWindow[w.id] || "S1"}
-                  onChange={(e) =>
-                    setServiceByWindow((s) => ({
-                      ...s,
-                      [w.id]: e.target.value as any,
-                    }))
-                  }
-                  disabled
-                  title="First-in-first-out mode enabled — service selection ignored"
-                >
-                  <option value="S1">Service 1</option>
-                  <option value="S2">Service 2</option>
-                  <option value="S3">Service 3</option>
-                </select>
                 <Button
                   onClick={() =>
-                    callNext.mutate({
-                      id: w.id,
-                    })
+                    callNext.mutate({ id: w.id })
                   }
                   disabled={callNext.isPending}
                 >
