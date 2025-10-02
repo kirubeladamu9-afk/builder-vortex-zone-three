@@ -332,14 +332,19 @@ const PhaseCard = ({
 
 export default function Index() {
   const [windows, setWindows] = useState<WindowState[]>([]);
-  const [waitingByService, setWaitingByService] = useState<Record<string, number>>({ S1: 0, S2: 0, S3: 0 });
+  const [waitingByService, setWaitingByService] = useState<
+    Record<string, number>
+  >({ S1: 0, S2: 0, S3: 0 });
   const [sseReady, setSseReady] = useState(false);
 
   useSSE("/api/events", (ev) => {
     if (ev.type === "init") {
       setSseReady(true);
       setWindows(ev.payload.windows as WindowState[]);
-      const services = ev.payload.services as Record<string, { nextNumber: number; waitingIds: string[] }>;
+      const services = ev.payload.services as Record<
+        string,
+        { nextNumber: number; waitingIds: string[] }
+      >;
       if (services) {
         setWaitingByService({
           S1: services.S1?.waitingIds?.length || 0,
@@ -350,12 +355,15 @@ export default function Index() {
     }
     if (ev.type === "window.updated") {
       const w = ev.payload as WindowState;
-      setWindows((prev) => (prev.length ? prev.map((x) => (x.id === w.id ? w : x)) : [w]));
+      setWindows((prev) =>
+        prev.length ? prev.map((x) => (x.id === w.id ? w : x)) : [w],
+      );
     }
   });
 
   const servingCount = windows.filter((w) => Boolean(w.currentTicketId)).length;
-  const waitingTotal = waitingByService.S1 + waitingByService.S2 + waitingByService.S3;
+  const waitingTotal =
+    waitingByService.S1 + waitingByService.S2 + waitingByService.S3;
 
   return (
     <div className="relative overflow-hidden">
@@ -399,19 +407,37 @@ export default function Index() {
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl border border-border/60 bg-background/80 p-4 shadow-sm">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">Waiting tickets</p>
-                <p className="mt-2 font-display text-3xl font-semibold text-foreground">{waitingTotal}</p>
-                <p className="mt-1 text-xs text-muted-foreground">DB-backed (S1/S2/S3)</p>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Waiting tickets
+                </p>
+                <p className="mt-2 font-display text-3xl font-semibold text-foreground">
+                  {waitingTotal}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  DB-backed (S1/S2/S3)
+                </p>
               </div>
               <div className="rounded-2xl border border-border/60 bg-background/80 p-4 shadow-sm">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">Active windows</p>
-                <p className="mt-2 font-display text-3xl font-semibold text-foreground">{servingCount}</p>
-                <p className="mt-1 text-xs text-muted-foreground">Now serving via SSE</p>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Active windows
+                </p>
+                <p className="mt-2 font-display text-3xl font-semibold text-foreground">
+                  {servingCount}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Now serving via SSE
+                </p>
               </div>
               <div className="rounded-2xl border border-border/60 bg-background/80 p-4 shadow-sm">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">Database</p>
-                <p className="mt-2 font-display text-3xl font-semibold text-foreground">{sseReady ? "Connected" : "Connecting"}</p>
-                <p className="mt-1 text-xs text-muted-foreground">Postgres + real-time events</p>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Database
+                </p>
+                <p className="mt-2 font-display text-3xl font-semibold text-foreground">
+                  {sseReady ? "Connected" : "Connecting"}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Postgres + real-time events
+                </p>
               </div>
             </div>
           </div>

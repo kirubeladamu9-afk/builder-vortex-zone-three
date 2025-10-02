@@ -56,8 +56,12 @@ export async function initDb() {
     `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS owner_name text;`,
   );
   await p.query(`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS woreda text;`);
-  await p.query(`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS started_at timestamptz;`);
-  await p.query(`ALTER TABLE tickets ADD COLUMN IF NOT EXISTS completed_at timestamptz;`);
+  await p.query(
+    `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS started_at timestamptz;`,
+  );
+  await p.query(
+    `ALTER TABLE tickets ADD COLUMN IF NOT EXISTS completed_at timestamptz;`,
+  );
   await p.query(`CREATE TABLE IF NOT EXISTS service_counters (
     service text primary key,
     next_number int not null
@@ -337,9 +341,11 @@ export async function getTicketByCodeDb(code: string): Promise<{
      FROM tickets WHERE code=$1 LIMIT 1`,
     [code],
   );
-  if (!tRes.rowCount) return { ticket: null, positionInQueue: null, estimatedWaitSeconds: null };
+  if (!tRes.rowCount)
+    return { ticket: null, positionInQueue: null, estimatedWaitSeconds: null };
   const t = rowToTicket(tRes.rows[0]);
-  if (t.status !== "waiting") return { ticket: t, positionInQueue: null, estimatedWaitSeconds: null };
+  if (t.status !== "waiting")
+    return { ticket: t, positionInQueue: null, estimatedWaitSeconds: null };
   const posRes = await p.query(
     `SELECT COUNT(*) AS ahead FROM tickets
      WHERE service=$1 AND status='waiting' AND (created_at < (SELECT created_at FROM tickets WHERE id=$2) OR (created_at = (SELECT created_at FROM tickets WHERE id=$2) AND number < (SELECT number FROM tickets WHERE id=$2)))`,
@@ -352,8 +358,15 @@ export async function getTicketByCodeDb(code: string): Promise<{
      FROM tickets WHERE service=$1 AND completed_at IS NOT NULL AND started_at IS NOT NULL`,
     [t.service],
   );
-  const avg = Math.max(60, Math.round(Number(avgRes.rows[0]?.avg_seconds || 300)));
-  return { ticket: t, positionInQueue: position, estimatedWaitSeconds: position * avg };
+  const avg = Math.max(
+    60,
+    Math.round(Number(avgRes.rows[0]?.avg_seconds || 300)),
+  );
+  return {
+    ticket: t,
+    positionInQueue: position,
+    estimatedWaitSeconds: position * avg,
+  };
 }
 
 function rowToTicket(r: any): Ticket {

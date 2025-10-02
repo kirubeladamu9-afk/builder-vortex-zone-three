@@ -130,7 +130,9 @@ export default function Teller() {
                       </span>
                     </div>
                     <div>
-                      <p className="text-xs uppercase text-muted-foreground">Notes</p>
+                      <p className="text-xs uppercase text-muted-foreground">
+                        Notes
+                      </p>
                       <p className="whitespace-pre-wrap">
                         {tickets[w.currentTicketId]?.notes || "—"}
                       </p>
