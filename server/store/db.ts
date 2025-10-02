@@ -277,14 +277,15 @@ export async function completeDb(windowId: number) {
   }
 }
 
-export async function skipDb(windowId: number) {
+export async function skipDb(windowId: number, reason?: string) {
   const p = getPool();
   const client = await p.connect();
   try {
     await client.query("BEGIN");
     const w = await getWindow(client, windowId);
     if (!w.currentTicketId) throw new Error("No active ticket");
-    const remark = `Skipped by window ${windowId} at ${new Date().toISOString()}`;
+    const remarkBase = `Skipped by window ${windowId} at ${new Date().toISOString()}`;
+    const remark = reason ? `${remarkBase}. Reason: ${reason}` : remarkBase;
     const tRes = await client.query(
       `UPDATE tickets SET status='skipped', skipped_at=now(), skipped_by_window=$2, remark=$3 WHERE id=$1 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes, owner_name, woreda;`,
       [w.currentTicketId, windowId, remark],
