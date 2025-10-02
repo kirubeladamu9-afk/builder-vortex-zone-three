@@ -325,9 +325,10 @@ export const complete: RequestHandler = async (req, res) => {
 
 export const skip: RequestHandler = async (req, res) => {
   const windowId = Number(req.params.id);
+  const { reason } = (req.body || {}) as { reason?: string };
   if (isDbEnabled) {
     try {
-      const { window, ticket } = await skipDb(windowId);
+      const { window, ticket } = await skipDb(windowId, reason);
       sendSSE({ type: "window.updated", payload: window });
       sendSSE({ type: "ticket.updated", payload: ticket });
       const rows = await displayRowsDb();
