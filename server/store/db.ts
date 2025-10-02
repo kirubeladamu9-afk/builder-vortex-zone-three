@@ -236,17 +236,30 @@ export async function callNextAnyDb(windowId: number) {
   }
 }
 
-export async function recallDb(windowId: number) {
+export async function recallDb(windowId: number, reason?: string) {
   const p = getPool();
-  const { rows } = await p.query(
-    `SELECT t.* , extract(epoch from t.created_at)*1000 as created_at_ms
-    FROM windows w LEFT JOIN tickets t ON t.id = w.current_ticket_id WHERE w.id=$1`,
-    [windowId],
-  );
-  const r = rows[0];
-  return {
-    ticket: r ? rowToTicket({ ...r, created_at: r.created_at_ms }) : null,
-  };
+  const client = await p.connect();
+  try {
+    await client.query("BEGIN");
+    const w = await getWindow(client, windowId);
+    if (!w.currentTicketId) {
+      await client.query("ROLLBACK");
+      return { ticket: null };
+    }
+    const remarkBase = `Recalled by window ${windowId} at ${new Date().toISOString()}`;
+    const append = reason ? `${remarkBase}. Reason: ${reason}` : remarkBase;
+    const tRes = await client.query(
+      `UPDATE tickets SET remark = CASE WHEN remark IS NULL OR remark='' THEN $2 ELSE remark || E'\n' || $2 END WHERE id=$1 RETURNING id, service, number, code, status, window_id, extract(epoch from created_at)*1000 as created_at, notes, owner_name, woreda;`,
+      [w.currentTicketId, append],
+    );
+    await client.query("COMMIT");
+    return { ticket: rowToTicket(tRes.rows[0]) };
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
 }
 
 export async function completeDb(windowId: number) {
