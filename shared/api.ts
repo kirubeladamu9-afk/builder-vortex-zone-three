@@ -63,6 +63,11 @@ export interface DisplayResponse {
   rows: DisplayRow[];
 }
 
+export interface TicketStatusResponse {
+  ticket: Ticket | null;
+  positionInQueue: number | null; // 1-based position if waiting, else null
+}
+
 export function formatTicketCode(service: ServiceType, number: number) {
   return `${service}-${String(number).padStart(3, "0")}`;
 }
