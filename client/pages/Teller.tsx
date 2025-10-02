@@ -8,6 +8,19 @@ import { toast } from "sonner";
 import { apiFetch, apiUrl } from "@/lib/api";
 
 
+function speak(text: string) {
+  try {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    const u = new SpeechSynthesisUtterance(text);
+    const voices = window.speechSynthesis.getVoices();
+    const en = voices.find((v) => /en[-_]/i.test(v.lang));
+    if (en) u.voice = en;
+    u.rate = 1;
+    u.pitch = 1;
+    window.speechSynthesis.speak(u);
+  } catch {}
+}
+
 export default function Teller() {
   const qc = useQueryClient();
 
@@ -39,33 +52,26 @@ export default function Teller() {
 
   const callNext = useMutation({
     mutationFn: async (p: { id: number }) =>
-      apiFetch(`/api/windows/${p.id}/call-next`, {
+      apiFetch<{ window: WindowState; ticket: Ticket }>(`/api/windows/${p.id}/call-next`, {
         method: "POST",
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["windows"] }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["windows"] });
+      if (data?.ticket && data?.window) {
+        speak(`Ticket ${data.ticket.code}, please proceed to ${data.window.name}`);
+      }
+    },
   });
 
   const recall = useMutation({
     mutationFn: async (p: { id: number; reason?: string }) =>
-      apiFetch(`/api/windows/${p.id}/recall`, {
+      apiFetch<{ ticket: Ticket }>(`/api/windows/${p.id}/recall`, {
         method: "POST",
         body: JSON.stringify({ reason: p.reason }),
-        headers: { "Content-Type": "application/json" },
       }),
-    onSuccess: () => {
-      try {
-        const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.type = "sine";
-        o.frequency.value = 880;
-        o.connect(g);
-        g.connect(ctx.destination);
-        g.gain.setValueAtTime(0.0001, ctx.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.01);
-        o.start();
-        o.stop(ctx.currentTime + 0.25);
-      } catch {}
+    onSuccess: (data, vars) => {
+      const win = qc.getQueryData<WindowState[]>(["windows"])?.find((w) => w.id === vars.id);
+      if (data?.ticket && win) speak(`Ticket ${data.ticket.code}, please proceed to ${win.name}`);
       toast.message("Recalled current ticket");
     },
   });
@@ -85,7 +91,7 @@ export default function Teller() {
   });
   const transfer = useMutation({
     mutationFn: async (p: { id: number; target: number }) =>
-      api(`/api/windows/${p.id}/transfer`, {
+      apiFetch(`/api/windows/${p.id}/transfer`, {
         method: "POST",
         body: JSON.stringify({ targetWindowId: p.target }),
       }),
